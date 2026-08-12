@@ -1609,7 +1609,7 @@ Item {
         }
 
         function parseCsv(csv) {
-            var lines = csv.split("\r\n");
+            var lines = csv.split(/\r?\n/);
             var tuneCount = lines[0].split(",").length - 1;
 
             var result = [];
@@ -4909,7 +4909,7 @@ Item {
         function download() {
             tuneArchiveDownloadStatus.text = "Downloading tunes...";
             var http = new XMLHttpRequest();
-            var url = "http://us-central1-mimetic-union-377520.cloudfunctions.net/float_package_tunes_via_http";
+            var url = "http://vesc.buestad.net/wheel-e_tunes.csv";
             http.open("GET", url, true);
             http.onreadystatechange = function() {
                 if (http.readyState === XMLHttpRequest.DONE) {
