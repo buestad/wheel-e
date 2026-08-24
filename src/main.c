@@ -910,8 +910,7 @@ static void refloat_thd(void *arg) {
             // DOWN and HOLD modes always exit instantly on brake regardless of exit rate.
             // NONE mode respects the exit ramp if configured.
             if (d->footpad.adc2_mapped > 0.0f && !d->wheelie_exiting) {
-                bool instant_brake_exit =
-                    d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN ||
+                bool instant_brake_exit = d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN ||
                     d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD;
                 if (d->wheelie_exit_step_size > 0.0f && !instant_brake_exit) {
                     // Start ramping the setpoint down to 0
@@ -1238,8 +1237,8 @@ static void refloat_thd(void *arg) {
             // regardless of current pitch. None and Down use pitch-based auto-entry.
             // Brake active always blocks entry.
             if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
-                d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
-                d->wheelie_btn.pressed && !d->wheelie_btn.prev) {
+                d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD && d->wheelie_btn.pressed &&
+                !d->wheelie_btn.prev) {
                 engage(d);
                 d->setpoint_target = d->float_conf.wheelie_target_pitch;
                 d->balance_current = d->throttle_current;
