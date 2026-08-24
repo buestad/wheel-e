@@ -1193,7 +1193,7 @@ static void refloat_thd(void *arg) {
                 // Only apply brake current while spinning to avoid heating a stationary motor
                 if (d->motor.abs_erpm > 100) {
                     current = d->throttle_val * (d->float_conf.throttle_brake_percent / 100.0f) *
-                        -d->motor.current_min;
+                        d->motor.current_min;
                 }
             } else if (d->throttle_val > 0) {
                 current = d->throttle_val * d->motor.current_max;
