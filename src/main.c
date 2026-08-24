@@ -904,10 +904,13 @@ static void refloat_thd(void *arg) {
             d->enable_upside_down = true;
 
             // Wheelie exit: brake pressed on ADC2 -> begin exit sequence.
-            // If exit rate is configured, gradually lower the setpoint to 0 while
-            // the balance loop keeps running. Otherwise exit instantly.
+            // DOWN and HOLD modes always exit instantly on brake regardless of exit rate.
+            // NONE mode respects the exit ramp if configured.
             if (d->footpad.adc2_mapped > 0.0f && !d->wheelie_exiting) {
-                if (d->wheelie_exit_step_size > 0.0f) {
+                bool instant_brake_exit =
+                    d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN ||
+                    d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD;
+                if (d->wheelie_exit_step_size > 0.0f && !instant_brake_exit) {
                     // Start ramping the setpoint down to 0
                     d->wheelie_exiting = true;
                     d->setpoint_target = 0;
