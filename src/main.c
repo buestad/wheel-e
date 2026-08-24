@@ -914,6 +914,7 @@ static void refloat_thd(void *arg) {
                     d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD;
                 if (d->wheelie_exit_step_size > 0.0f && !instant_brake_exit) {
                     // Start ramping the setpoint down to 0
+                    d->wheelie_entering = false;
                     d->wheelie_exiting = true;
                     d->setpoint_target = 0;
                 } else {
@@ -937,6 +938,7 @@ static void refloat_thd(void *arg) {
                 }
                 if (btn_exit) {
                     if (d->wheelie_exit_step_size > 0.0f) {
+                        d->wheelie_entering = false;
                         d->wheelie_exiting = true;
                         d->setpoint_target = 0;
                     } else {
