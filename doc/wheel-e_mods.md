@@ -140,9 +140,9 @@ On top of this, a configurable current deadband (`throttle_current_deadband`) su
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `wheelie_target_pitch` | `float` | 25° | Pitch angle the balance loop holds in wheelie mode |
-| `wheelie_entry_rate` | `float` | 0 °/s | Rate to ramp setpoint up to target on entry; 0 = instant |
+| `wheelie_entry_rate` | `float` | 0 °/s | Rate to ramp setpoint up to target on entry; 0 = instant; values 1–19 are clamped to 20 °/s minimum |
 | `wheelie_entry_rate_factor` | `float` | 0 °/s per km/h | Speed-dependent adjustment: effective entry rate = `wheelie_entry_rate + abs(speed_kmh) × factor`; clamped to 0 |
-| `wheelie_exit_rate` | `float` | 0 °/s | Rate to ramp setpoint down to 0° on exit; 0 = instant |
+| `wheelie_exit_rate` | `float` | 0 °/s | Rate to ramp setpoint down to 0° on exit; 0 = instant; values 1–19 are clamped to 20 °/s minimum |
 | `wheelie_exit_rate_factor` | `float` | 0 °/s per km/h | Speed-dependent adjustment: effective exit rate = `wheelie_exit_rate + abs(speed_kmh) × factor`; clamped to 0 |
 | `wheelie_button_mode` | `WheelieButtonMode` | None | How the button on TX/SCL interacts with wheelie entry/exit |
 | `cruise_enabled` | `bool` | false | Enables cruise control and configures RX pin as pull-up input |
@@ -231,7 +231,7 @@ After `check_faults()` stops the balance loop (e.g., pitch fault from landing), 
 #### `STATE_RUNNING` — wheelie exit on brake
 When the brake is pressed (ADC2 mapped > 0), the exit behaviour depends on `wheelie_exit_rate`:
 
-**With exit ramp (`wheelie_exit_rate` > 0):** The balance loop stays active but `setpoint_target` is set to 0°. Each loop iteration the effective exit rate is computed as `wheelie_exit_rate + abs(motor.speed) × wheelie_exit_rate_factor` (clamped to ≥ 0), then divided by `hertz` to get the per-iteration step size. Once the interpolated setpoint reaches ≤ `startup_pitch_tolerance`, the state transitions to `STATE_THROTTLE` with a bumpless handover.
+**With exit ramp (`wheelie_exit_rate` > 0):** The balance loop stays active but `setpoint_target` is set to 0°. Each loop iteration the effective exit rate is computed as `wheelie_exit_rate + abs(motor.speed) × wheelie_exit_rate_factor` (clamped to ≥ 0), then divided by `hertz` to get the per-iteration step size. A minimum of 20 °/s is enforced at configure time to prevent dangerously slow exits from misconfigured or stale values. Once the interpolated setpoint reaches ≤ `startup_pitch_tolerance`, the state transitions to `STATE_THROTTLE` with a bumpless handover.
 
 On button-triggered entry (Hold mode), `wheelie_entry_rate` and `wheelie_entry_rate_factor` are used instead: the setpoint ramps up from the current pitch to `wheelie_target_pitch` at the computed entry rate.
 
@@ -432,9 +432,9 @@ When deploying on a bike, set the following in the VESC Tool UI:
 |App Cfg → General | App to use | `No App` | Disables the VESC built in ADC app. Prevents interference with the current commands. Alternatively set to `UART` |
 |Motor Cfg → General → Current | Max current | Safe value | This is the max motor current. Set this low when you start to tune to prevent damage |
 |Refloat Cfg → Bike | Wheelie Target Pitch (`wheelie_target_pitch`) | Tune per bike | Physical balance point — start at 25° and adjust |
-|Refloat Cfg → Bike | Wheelie Entry Rate (`wheelie_entry_rate`) | `0` or `30-90` | °/s to ramp setpoint up on entry; 0 = instant |
+|Refloat Cfg → Bike | Wheelie Entry Rate (`wheelie_entry_rate`) | `0` or `30-90` | °/s to ramp setpoint up on entry; 0 = instant; minimum 20 °/s enforced for non-zero values |
 |Refloat Cfg → Bike | Wheelie Entry Rate Factor (`wheelie_entry_rate_factor`) | `0` | °/s added per km/h of bike speed during entry ramp |
-|Refloat Cfg → Bike | Wheelie Exit Rate (`wheelie_exit_rate`) | `0` or `30-90` | °/s to ramp setpoint down on exit; 0 = instant |
+|Refloat Cfg → Bike | Wheelie Exit Rate (`wheelie_exit_rate`) | `0` or `30-90` | °/s to ramp setpoint down on exit; 0 = instant; minimum 20 °/s enforced for non-zero values |
 |Refloat Cfg → Bike | Wheelie Exit Rate Factor (`wheelie_exit_rate_factor`) | `0` | °/s added per km/h of bike speed during exit ramp |
 |Refloat Cfg → Bike | Wheelie Button Mode (`wheelie_button_mode`) | `None` | Button on TX pin: None / Down / Hold |
 |Refloat Cfg → Bike | Throttle Current Deadband (`throttle_current_deadband`) | `1.0` | Current commands below this (A) are suppressed to zero |

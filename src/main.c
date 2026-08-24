@@ -196,9 +196,12 @@ static void configure(Data *d) {
     d->tiltback_lv_step_size = d->float_conf.tiltback_lv_speed / d->float_conf.hertz;
     d->tiltback_return_step_size = d->float_conf.tiltback_return_speed / d->float_conf.hertz;
 
-    // Wheelie exit ramp: precompute step size used to gate whether exit ramp is active
+    // Wheelie exit ramp: precompute step size used to gate whether exit ramp is active.
+    // Enforce a minimum of 20 deg/s to prevent dangerously slow exits from misconfigured
+    // or stale (pre-rate) values.
     if (d->float_conf.wheelie_exit_rate > 0.0f) {
-        d->wheelie_exit_step_size = d->float_conf.wheelie_exit_rate / d->float_conf.hertz;
+        float exit_rate = fmaxf(d->float_conf.wheelie_exit_rate, 20.0f);
+        d->wheelie_exit_step_size = exit_rate / d->float_conf.hertz;
     } else {
         d->wheelie_exit_step_size = 0.0f;
     }
@@ -969,7 +972,9 @@ static void refloat_thd(void *arg) {
             if (d->wheelie_entering) {
                 float ramp_rate = d->float_conf.wheelie_entry_rate +
                     fabsf(d->motor.speed) * d->float_conf.wheelie_entry_rate_factor;
-                if (ramp_rate < 0.0f) {
+                if (ramp_rate > 0.0f) {
+                    ramp_rate = fmaxf(ramp_rate, 20.0f);
+                } else if (ramp_rate < 0.0f) {
                     ramp_rate = 0.0f;
                 }
                 step_size = ramp_rate / d->float_conf.hertz;
