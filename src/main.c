@@ -1203,8 +1203,10 @@ static void refloat_thd(void *arg) {
             float deadband = d->float_conf.throttle_current_deadband;
             if (current < -deadband) {
                 motor_control_request_brake_current(&d->motor_control, -current);
+                d->throttle_current = 0;
             } else if (current > deadband) {
                 motor_control_request_current(&d->motor_control, current);
+                d->throttle_current = current;
             } else if (d->float_conf.throttle_regen_percent > 0 && d->motor.abs_erpm > 100) {
                 // Regen brake when throttle is at zero and wheel is still spinning
                 float regen_current =
@@ -1226,7 +1228,9 @@ static void refloat_thd(void *arg) {
 
             // Wheelie entry: Hold mode triggers immediately on button press (rising edge),
             // regardless of current pitch. None and Down use pitch-based auto-entry.
-            if (d->wheelie_entry_armed && d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
+            // Brake active always blocks entry.
+            if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
+                d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
                 d->wheelie_btn.pressed && !d->wheelie_btn.prev) {
                 engage(d);
                 d->setpoint_target = d->float_conf.wheelie_target_pitch;
@@ -1234,7 +1238,7 @@ static void refloat_thd(void *arg) {
                 if (d->float_conf.wheelie_entry_rate > 0.0f) {
                     d->wheelie_entering = true;
                 }
-            } else if (d->wheelie_entry_armed &&
+            } else if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
                        (d->float_conf.wheelie_button_mode == WHEELIE_BTN_NONE ||
                         d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN) &&
                        d->imu.balance_pitch >= (d->float_conf.wheelie_target_pitch -

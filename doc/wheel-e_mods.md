@@ -47,17 +47,26 @@ The bike balances on its **rear wheel only**, with the front wheel lifted (wheel
 - While spinning, the brake current regenerates energy back into the battery; at standstill the guard prevents the zero-regen case from applying a holding current
 
 ### 2. Wheelie entry trigger
-- The balance/wheelie loop engages automatically when pitch rises close to `wheelie_target_pitch`. 
-- The tolerance for engange is defined by `startup_pitch_tolerance` which is a ReFloat setting (ReFloat -> Startup -> Tolerances -> Startup Pitch Axis Angle Tolerance)
-- Example: target = 25°, tolerance = 4° → balance loop engages at 21°
+- `wheelie_button_mode` controls how the balance loop is engaged from `STATE_THROTTLE`:
+
+  | Mode | Entry trigger | Exit trigger | Entry ramp |
+  |---|---|---|---|
+  | `WHEELIE_BTN_NONE` | Automatic: pitch ≥ `wheelie_target_pitch − startup_pitch_tolerance` | Brake (ADC2) | None (instant snap-in) |
+  | `WHEELIE_BTN_DOWN` | Automatic: same pitch threshold | Brake **or** button press | None (instant snap-in) |
+  | `WHEELIE_BTN_HOLD` | Button press (rising edge on TX pin); pitch threshold is **ignored** | Brake **or** button released | Ramps via `wheelie_entry_rate` / `wheelie_entry_rate_factor` |
+
+- Example (NONE/DOWN auto-entry): target = 25°, tolerance = 4° → balance loop engages at 21°
 - Both `wheelie_target_pitch` and `startup_pitch_tolerance` are user-configurable parameters
 - Throttle input is **ignored** while in wheelie/balance mode; only leaning affects speed
 
 ### 3. Wheelie exit
-- Pressing the brake (ADC2 mapped > 0) while in wheelie mode triggers an exit sequence:
+- Exit triggers vary by button mode (brake always exits in all modes):
+  - **NONE**: brake only
+  - **DOWN**: brake **or** button press (rising edge) — the button is used to intentionally lower the wheelie
+  - **HOLD**: brake **or** button released — releasing the button exits wheelie
+- Exit sequence:
   - **With ramp** (`wheelie_exit_rate` > 0): the balance loop stays active and the pitch setpoint ramps from `wheelie_target_pitch` down to 0° at the configured rate (°/s), gently lowering the front wheel. Once the setpoint reaches ~0°, the state transitions to `STATE_THROTTLE` with `throttle_current` seeded from `balance_current` for a bumpless handover.
   - **Without ramp** (`wheelie_exit_rate` = 0): instant exit to `STATE_THROTTLE`, seeding `throttle_current` from `balance_current`.
-- The button (`wheelie_button_mode`) can also trigger exit — see section on button modes below.
 - **Re-entry hysteresis**: after exiting wheelie, re-entry is blocked until pitch drops below `startup_pitch_tolerance` (near level). This prevents a brief brake tap from immediately re-engaging wheelie.
 - Throttle (ADC1) is ignored in wheelie mode
 
@@ -292,7 +301,7 @@ case STATE_THROTTLE: {
         // Only apply brake current while spinning to avoid heating a stationary motor
         if (d->motor.abs_erpm > 100) {
             current = d->throttle_val *
-                (d->float_conf.throttle_brake_percent / 100.0f) * -d->motor.current_min;
+                (d->float_conf.throttle_brake_percent / 100.0f) * d->motor.current_min;
         }
     } else if (d->throttle_val > 0) {
         current = d->throttle_val * d->motor.current_max;
@@ -301,8 +310,10 @@ case STATE_THROTTLE: {
     float deadband = d->float_conf.throttle_current_deadband;
     if (current < -deadband) {
         motor_control_request_brake_current(&d->motor_control, -current);
+        d->throttle_current = 0;
     } else if (current > deadband) {
         motor_control_request_current(&d->motor_control, current);
+        d->throttle_current = current;
     } else if (d->float_conf.throttle_regen_percent > 0 && d->motor.abs_erpm > 100) {
         // Regen brake when throttle is at zero and wheel is still spinning
         float regen_current =
@@ -323,15 +334,17 @@ case STATE_THROTTLE: {
 
     // Wheelie entry: Hold mode triggers immediately on button press (rising edge),
     // regardless of current pitch. None and Down use pitch-based auto-entry.
-    if (d->wheelie_entry_armed && d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
-        d->wheelie_btn_pressed && !d->wheelie_btn_prev) {
+    // Brake active always blocks entry.
+    if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
+        d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
+        d->wheelie_btn.pressed && !d->wheelie_btn.prev) {
         engage(d);
         d->setpoint_target = d->float_conf.wheelie_target_pitch;
         d->balance_current = d->throttle_current;
         if (d->float_conf.wheelie_entry_rate > 0.0f) {
             d->wheelie_entering = true;
         }
-    } else if (d->wheelie_entry_armed &&
+    } else if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
                (d->float_conf.wheelie_button_mode == WHEELIE_BTN_NONE ||
                 d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN) &&
                d->imu.balance_pitch >= (d->float_conf.wheelie_target_pitch -
@@ -389,6 +402,8 @@ Exit conditions checked first each cycle: any brake touch (`adc2_mapped > 0`) or
 #### Bumpless transfer on wheelie entry
 
 `engage()` calls `reset_runtime_vars()`, which zeros both `balance_current` and the PID state. Without correction this causes a current step from whatever `throttle_current` was down to 0A the instant the balance loop takes over, producing an immediate deceleration kick.
+
+`throttle_current` is updated every cycle in `STATE_THROTTLE` to the actual current being commanded: set to the computed forward current when throttle is active, and zeroed when the brake is active (a negative seed would fight the wheelie). This keeps `throttle_current` a live reflection of the motor output at the moment of entry.
 
 The fix seeds `balance_current` from `throttle_current` immediately after `engage()` returns. Because `STATE_RUNNING` integrates `balance_current` with an 0.8/0.2 IIR (`balance_current = balance_current * 0.8 + new_current * 0.2`), starting from the live throttle value gives the PID integral time to wind up to the correct steady-state current before the seed decays. No I-term preload is required — the seeded `balance_current` provides enough continuity.
 
