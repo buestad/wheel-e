@@ -922,11 +922,10 @@ static void refloat_thd(void *arg) {
                     state_throttle(&d->state);
                     d->throttle_current = d->balance_current;
                     d->wheelie_entry_armed = false;
+                    d->wheelie_entering = false;
                     break;
                 }
             }
-
-            // Button-triggered wheelie exit
             if (!d->wheelie_exiting) {
                 bool btn_exit = false;
                 if (d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN) {
@@ -945,6 +944,7 @@ static void refloat_thd(void *arg) {
                         state_throttle(&d->state);
                         d->throttle_current = d->balance_current;
                         d->wheelie_entry_armed = false;
+                        d->wheelie_entering = false;
                         break;
                     }
                 }
