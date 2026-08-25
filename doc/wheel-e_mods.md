@@ -242,11 +242,11 @@ On button-triggered entry (Hold mode), `wheelie_entry_rate` and `wheelie_entry_r
 // DOWN and HOLD modes always exit instantly on brake regardless of exit rate.
 // NONE mode respects the exit ramp if configured.
 if (d->footpad.adc2_mapped > 0.0f && !d->wheelie_exiting) {
-    bool instant_brake_exit =
-        d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN ||
+    bool instant_brake_exit = d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN ||
         d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD;
     if (d->wheelie_exit_step_size > 0.0f && !instant_brake_exit) {
         // Start ramping the setpoint down to 0
+        d->wheelie_entering = false;
         d->wheelie_exiting = true;
         d->setpoint_target = 0;
     } else {
@@ -254,7 +254,31 @@ if (d->footpad.adc2_mapped > 0.0f && !d->wheelie_exiting) {
         state_throttle(&d->state);
         d->throttle_current = d->balance_current;
         d->wheelie_entry_armed = false;
+        d->wheelie_entering = false;
         break;
+    }
+}
+
+// Button-triggered exit (DOWN: press, HOLD: release)
+if (!d->wheelie_exiting) {
+    bool btn_exit = false;
+    if (d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN) {
+        btn_exit = d->wheelie_btn.pressed && !d->wheelie_btn.prev;
+    } else if (d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD) {
+        btn_exit = !d->wheelie_btn.pressed;
+    }
+    if (btn_exit) {
+        if (d->wheelie_exit_step_size > 0.0f) {
+            d->wheelie_entering = false;
+            d->wheelie_exiting = true;
+            d->setpoint_target = 0;
+        } else {
+            state_throttle(&d->state);
+            d->throttle_current = d->balance_current;
+            d->wheelie_entry_armed = false;
+            d->wheelie_entering = false;
+            break;
+        }
     }
 }
 
@@ -326,8 +350,8 @@ case STATE_THROTTLE: {
     // regardless of current pitch. None and Down use pitch-based auto-entry.
     // Brake active always blocks entry.
     if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
-        d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
-        d->wheelie_btn.pressed && !d->wheelie_btn.prev) {
+        d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD && d->wheelie_btn.pressed &&
+        !d->wheelie_btn.prev) {
         engage(d);
         d->setpoint_target = d->float_conf.wheelie_target_pitch;
         d->balance_current = d->throttle_current;
