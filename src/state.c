@@ -53,6 +53,13 @@ void state_cruise(State *state) {
     state->wheelslip = false;
 }
 
+void state_flywheel_off(State *state) {
+    if (state->mode == MODE_FLYWHEEL) {
+        state->state = STATE_READY;
+        state->wheelslip = false;
+    }
+}
+
 void state_set_disabled(State *state, bool disabled) {
     if (state->state != STATE_RUNNING && disabled) {
         state->state = STATE_DISABLED;

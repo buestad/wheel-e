@@ -22,54 +22,54 @@
 #include <math.h>
 
 void footpad_sensor_init(FootpadSensor *fs) {
-    fs->adc1 = 0.0f;
-    fs->adc2 = 0.0f;
+    fs->adc_left = 0.0f;
+    fs->adc_right = 0.0f;
+    fs->state = FS_NONE;
+
     fs->adc1_filtered = 0.0f;
     fs->adc2_filtered = 0.0f;
     fs->adc1_mapped = 0.0f;
     fs->adc2_mapped = 0.0f;
-    fs->state = FS_NONE;
 }
 
 void footpad_sensor_update(FootpadSensor *fs, const RefloatConfig *config) {
-    fs->adc1 = VESC_IF->io_read_analog(VESC_PIN_ADC1);
-    // Returns -1.0 if the pin is missing on the hardware
-    fs->adc2 = VESC_IF->io_read_analog(VESC_PIN_ADC2);
-    if (fs->adc2 < 0.0) {
-        fs->adc2 = 0.0;
+    // io_read_analog() returns -1.0 if the pin is missing on the hardware
+    float adc1 = VESC_IF->io_read_analog(VESC_PIN_ADC1);
+    float adc2 = VESC_IF->io_read_analog(VESC_PIN_ADC2);
+
+    bool adc1_on = config->fault_adc1 == 0.0f || adc1 > config->fault_adc1;
+    bool adc2_on = config->fault_adc2 == 0.0f || adc2 > config->fault_adc2;
+
+    if (config->hardware.swap_footpad_adcs) {
+        fs->adc_left = adc2;
+        fs->adc_right = adc1;
+    } else {
+        fs->adc_left = adc1;
+        fs->adc_right = adc2;
     }
 
-    fs->state = FS_NONE;
-
-    if (config->fault_adc1 == 0 && config->fault_adc2 == 0) {  // No sensors
-        fs->state = FS_BOTH;
-    } else if (config->fault_adc2 == 0) {  // Single sensor on ADC1
-        if (fs->adc1 > config->fault_adc1) {
-            fs->state = FS_BOTH;
-        }
-    } else if (config->fault_adc1 == 0) {  // Single sensor on ADC2
-        if (fs->adc2 > config->fault_adc2) {
-            fs->state = FS_BOTH;
-        }
-    } else {  // Double sensor
-        if (fs->adc1 > config->fault_adc1) {
-            if (fs->adc2 > config->fault_adc2) {
-                fs->state = FS_BOTH;
-            } else {
-                fs->state = FS_LEFT;
-            }
-        } else {
-            if (fs->adc2 > config->fault_adc2) {
-                fs->state = FS_RIGHT;
-            }
-        }
+    if (config->fault_adc1 == 0.0f || config->fault_adc2 == 0.0f) {
+        // No or single sensor: report FS_BOTH when the (single) sensor is on, FS_NONE otherwise
+        fs->state = (adc1_on && adc2_on) ? FS_BOTH : FS_NONE;
+    } else if (config->hardware.swap_footpad_adcs) {
+        fs->state = adc1_on ? FS_RIGHT : FS_NONE;
+        fs->state |= adc2_on ? FS_LEFT : FS_NONE;
+    } else {
+        fs->state = adc1_on ? FS_LEFT : FS_NONE;
+        fs->state |= adc2_on ? FS_RIGHT : FS_NONE;
     }
 }
 
-void footpad_sensor_filter_and_map(FootpadSensor *fs, const RefloatConfig *config) {
+void footpad_sensor_filter_and_map(FootpadSensor *fs, const RefloatConfig *config, float dt) {
     float filter = config->throttle_adc_filter;
-    fs->adc1_filtered = fs->adc1_filtered * filter + fs->adc1 * (1.0f - filter);
-    fs->adc2_filtered = fs->adc2_filtered * filter + fs->adc2 * (1.0f - filter);
+    float adc1 = fs->adc_left;
+    float adc2 = fs->adc_right;
+    if (config->hardware.swap_footpad_adcs) {
+        adc1 = fs->adc_right;
+        adc2 = fs->adc_left;
+    }
+    fs->adc1_filtered = fs->adc1_filtered * filter + adc1 * (1.0f - filter);
+    fs->adc2_filtered = fs->adc2_filtered * filter + adc2 * (1.0f - filter);
 
     // ADC1: piecewise min/center/max mapping to 0.0–1.0
     {
@@ -113,7 +113,7 @@ void footpad_sensor_filter_and_map(FootpadSensor *fs, const RefloatConfig *confi
     // A ramp_time of 0 means instant apply (no ramp).
     float brake_target = _adc2_mapped;
     if (brake_target > fs->adc2_mapped && config->throttle_brake_ramp_time > 0.0f) {
-        float ramp_step = 1.0f / (config->throttle_brake_ramp_time * config->hertz);
+        float ramp_step = dt / config->throttle_brake_ramp_time;
         fs->adc2_mapped = fminf(fs->adc2_mapped + ramp_step, brake_target);
     } else {
         fs->adc2_mapped = brake_target;

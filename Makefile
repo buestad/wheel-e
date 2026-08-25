@@ -11,7 +11,7 @@ wheel-e.vescpkg: src lisp/package.lisp package_README-gen.md ui.qml
 ifeq ($(OLDVT), 1)
 	$(VESC_TOOL) --buildPkg "wheel-e.vescpkg:lisp/package.lisp:ui.qml:0:package_README-gen.md:Wheel-E"
 else
-	$(VESC_TOOL) --buildPkgFromDesc pkgdesc.qml
+	"$(VESC_TOOL)" --buildPkgFromDesc pkgdesc.qml
 endif
 
 src:

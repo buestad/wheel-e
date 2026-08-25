@@ -26,12 +26,12 @@
 
 typedef struct {
     bool disabled;
-    bool current_requested;
-    float requested_current;
-    bool brake_current_requested;
-    float requested_brake_current;
+
     uint8_t can_forward;
     uint8_t can_forward_id;
+
+    float requested_current;  // NAN if no current is requested
+    float requested_brake_current;  // NAN if no brake current is requested
 
     uint8_t click_counter;
     time_t brake_timer;
@@ -50,7 +50,7 @@ typedef struct {
 
 void motor_control_init(MotorControl *mc);
 
-void motor_control_configure(MotorControl *mc, const RefloatConfig *config);
+void motor_control_configure(MotorControl *mc, const RefloatConfig *config, uint16_t frequency);
 
 void motor_control_request_current(MotorControl *mc, float current);
 
