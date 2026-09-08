@@ -107,10 +107,11 @@ uint8_t state_compat(const State *state) {
             return 5;  // RUNNING_FLYWHEEL
         }
         return 1;  // RUNNING
+    // The legacy Float state is only 4 bits wide, the bike riding modes have
+    // no code of their own and are reported as RUNNING.
     case STATE_THROTTLE:
-        return 16;  // THROTTLE (bike normal riding mode)
     case STATE_CRUISE:
-        return 17;  // CRUISE (bike cruise control mode)
+        return 1;  // RUNNING
     }
     return 0;  // STARTUP
 }

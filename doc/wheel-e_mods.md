@@ -132,7 +132,12 @@ On top of this, a configurable current deadband (`throttle_current_deadband`) su
 ### `src/state.c`
 - Implemented `state_throttle()`: sets state to `STATE_THROTTLE`, clears `sat`, `stop_condition`, and `wheelslip`
 - Implemented `state_cruise()`: sets state to `STATE_CRUISE`, clears `sat`, `stop_condition`, and `wheelslip`
-- Added `case STATE_THROTTLE` → `16` and `case STATE_CRUISE` → `17` to `state_compat()`
+- `state_compat()` reports `STATE_THROTTLE` and `STATE_CRUISE` as legacy `RUNNING` (`1`)
+
+### Legacy state compatibility
+`state_compat()` supplies the original Float protocol used by the deprecated `GET_RTDATA` and `GET_ALLDATA` commands and by LCM status messages. Its state field is four bits wide and all codes `0` through `15` are already assigned, so it cannot distinguish the two bike riding states. Both therefore use legacy `RUNNING` (`1`).
+
+The current realtime-data protocol sends the internal state in bits 26-24 of `state_flags`; it preserves the distinct `STATE_THROTTLE` (`4`) and `STATE_CRUISE` (`5`) values for the Wheel-E UI.
 
 ### `src/conf/datatypes.h`
 - Added fields to `RefloatConfig` (before `CfgMeta meta`):

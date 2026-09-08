@@ -836,7 +836,8 @@ Item {
 
                 var stateFlags = dv.getUint32(ind); ind += 4;
                 state.pkgMode = (stateFlags >> 28) & 0b11;
-                state.pkgState = (stateFlags >> 24) & 0b11;
+                // Wheel-E uses 3 bits: states go up to CRUISE (5)
+                state.pkgState = (stateFlags >> 24) & 0b111;
 
                 var fpState = (stateFlags >> 22) & 0b11;
                 state.fpState = fpState;
