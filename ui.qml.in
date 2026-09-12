@@ -477,6 +477,19 @@ Item {
                 "tiltback_hv",
                 "tiltback_lv",
                 "tiltback_speed",
+                
+                // Wheel-E specific tune parameters which should no be "tunable"
+                 "throttle_current_deadband",
+                 "throttle_adc1_voltage_min",
+                 "throttle_adc1_voltage_center",
+                 "throttle_adc1_voltage_max",
+                 "throttle_adc1_invert",
+                 "throttle_adc2_voltage_min",
+                 "throttle_adc2_voltage_max",
+                 "throttle_adc2_invert",
+                 "wheelie_button_mode",
+                 "cruise_enabled",
+                 "can_forward_id",
             ];
 
             return !name.startsWith("haptic.") && !name.startsWith("hardware.") && !tuneBlacklist.includes(name);

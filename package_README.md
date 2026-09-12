@@ -18,7 +18,8 @@ Wheel-E is a VESC Package for electric mini-bikes with a wheelie mode. The packa
 * _Optional: Button between RX and GND which can be used for cruise control._
 
 ## Configuration
-* Configure as a onewheel (Use tutorials for onewheels, not bikes)
+* Configure as a onewheel (Use tutorials for onewheels, not bikes. IMU and Motor calibation is required before installing/enabeling Wheel-E!)
+* Put the bike on a stable surfce, wheel off the groung before installing/enabling Wheel-E.
 * Configure parameters under ReFloat Cfg -> Bike.
 * Disable the foot sensors by setting ADC Switch voltage to 0v (ReFloat Cfg -> Spec -> ADC1&2 Switch voltage: `0.0v`)
 * Make sure that the built in ADC app is not enabled. (App Cfg -> General -> App to Use: `No App` or `UART`)
