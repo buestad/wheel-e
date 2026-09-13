@@ -7469,9 +7469,63 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
+                Item {
+                    id: wheelieAngleControl
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 1.35 * unit
+
+                    Row {
+                        anchors.centerIn: parent
+                        width: parent.width - 2 * unit
+                        spacing: 0.25 * unit
+
+                        LText {
+                            id: wheelieAngleLabel
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Wheelie angle"
+                        }
+
+                        TapSlider {
+                            id: wheelieAngleSlider
+                            width: parent.width - wheelieAngleLabel.width - wheelieAngleValue.width - 2 * parent.spacing
+                            height: 0.6 * unit
+                            anchors.verticalCenter: parent.verticalCenter
+                            from: 5
+                            to: 60
+                            stepSize: 0.5
+                            value: packageConfig.checkConfig() ? packageConfig.getParamValue("wheelie_target_pitch") : 25
+
+                            onMoved: {
+                                if (!packageConfig.checkConfig()) return;
+
+                                packageConfig.pkgConfig.updateParamDouble("wheelie_target_pitch", value);
+                                wheelieAngleWriteTimer.restart();
+                            }
+                        }
+
+                        LText {
+                            id: wheelieAngleValue
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.pixelSize: fontSizeBig
+                            text: wheelieAngleSlider.value.toFixed(1) + "°"
+                        }
+                    }
+
+                    Timer {
+                        id: wheelieAngleWriteTimer
+                        interval: 250
+                        onTriggered: packageConfig.writeConfig()
+                    }
+                }
+
                 GridLayout {
                     property int spacing: 0.6 * unit
-                    anchors.fill: parent
+                    anchors.top: wheelieAngleControl.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
                     anchors.topMargin: spacing
                     anchors.leftMargin: spacing
                     anchors.rightMargin: spacing
