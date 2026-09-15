@@ -1171,9 +1171,14 @@ static void refloat_thd(void *arg) {
             // Normal two-wheel riding: ADC1 = throttle, ADC2 = brake
             // ADC filtering and mapping is done before the switch.
 
+            float deadband = d->float_conf.throttle_current_deadband;
+            float brake_current_max = (d->float_conf.throttle_brake_percent / 100.0f) *
+                d->motor.current_min;
+            bool brake_active = d->footpad.adc2_mapped * brake_current_max > deadband;
+
             // Combine into a single -1..1 value: brake wins if non-zero.
             // adc2_mapped is the ramped brake lever value (see footpad_sensor.c).
-            if (d->footpad.adc2_mapped > 0.0f) {
+            if (brake_active) {
                 d->throttle_val = -d->footpad.adc2_mapped;
             } else {
                 d->throttle_val = clampf(d->footpad.adc1_mapped, 0.0f, 1.0f);
@@ -1190,7 +1195,6 @@ static void refloat_thd(void *arg) {
             }
 
             // set current request. Ignore current below deadband
-            float deadband = d->float_conf.throttle_current_deadband;
             if (current < -deadband) {
                 motor_control_request_brake_current(&d->motor_control, -current);
                 d->throttle_current = 0;
