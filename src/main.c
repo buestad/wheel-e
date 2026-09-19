@@ -785,9 +785,14 @@ static void imu_ref_callback(float *acc, float *gyro, float *mag, float dt) {
         );
     }
 
-    motor_control_apply(
-        &d->motor_control, d->motor.abs_erpm_smooth.value, d->state.state, &d->time
-    );
+    // Throttle/Cruise set their current request in the main loop, not here; applying it
+    // from this (IMU-rate) callback would consume/reset stale requests between main loop
+    // ticks and cause spurious braking. The main loop applies it synchronously for those.
+    if (d->state.state != STATE_THROTTLE && d->state.state != STATE_CRUISE) {
+        motor_control_apply(
+            &d->motor_control, d->motor.abs_erpm_smooth.value, d->state.state, &d->time
+        );
+    }
 
     data_recorder_sample(&d->data_record, d, time);
 }
@@ -1172,8 +1177,8 @@ static void refloat_thd(void *arg) {
             // ADC filtering and mapping is done before the switch.
 
             float deadband = d->float_conf.throttle_current_deadband;
-            float brake_current_max = (d->float_conf.throttle_brake_percent / 100.0f) *
-                d->motor.current_min;
+            float brake_current_max =
+                (d->float_conf.throttle_brake_percent / 100.0f) * d->motor.current_min;
             bool brake_active = d->footpad.adc2_mapped * brake_current_max > deadband;
 
             // Combine into a single -1..1 value: brake wins if non-zero.
@@ -1298,6 +1303,14 @@ static void refloat_thd(void *arg) {
         }
         case STATE_DISABLED:
             break;
+        }
+
+        // Throttle/Cruise request their current here in the main loop, so apply it here too,
+        // synchronously, instead of relying on the (differently clocked) IMU callback.
+        if (d->state.state == STATE_THROTTLE || d->state.state == STATE_CRUISE) {
+            motor_control_apply(
+                &d->motor_control, d->motor.abs_erpm_smooth.value, d->state.state, &d->time
+            );
         }
 
         int32_t ticks =

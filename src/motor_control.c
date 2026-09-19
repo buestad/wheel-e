@@ -114,8 +114,10 @@ void motor_control_apply(MotorControl *mc, float abs_erpm, RunState state, const
 
     // BEWARE: Some sort of motor control must always be set before returning from this function
     if (!isnan(mc->requested_current)) {
-        // Keep modulation on for 50ms in case we request close-to-0 current
-        VESC_IF->mc_set_current_off_delay(0.05f);
+        if (mc->requested_current != 0.0f) {
+            // Keep modulation on for 50ms in case we request close-to-0 current
+            VESC_IF->mc_set_current_off_delay(0.05f);
+        }
         VESC_IF->mc_set_current(mc->requested_current);
         if (mc->can_forward > 0) {
             VESC_IF->can_set_current(mc->can_forward, mc->requested_current);
