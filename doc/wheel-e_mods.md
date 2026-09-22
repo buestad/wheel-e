@@ -60,6 +60,7 @@ _Note: The upper two modes are similar to Antic behaviour and the latter is simi
 
 - Example auto-entry: target = 25°, tolerance = 4° → balance loop engages at 21°
 - **Re-entry hysteresis**: after any exit, re-entry is blocked until pitch drops back below `startup_pitch_tolerance`. Brake active always blocks entry.
+- **Rolling guard (`WHEELIE_BTN_HOLD` only)**: button-triggered entry also requires `abs_erpm > 100`, so an accidental press while stationary can't engage a wheelie.
 - Throttle (ADC1) is **ignored** while in wheelie/balance mode; only leaning affects speed.
 
 
@@ -69,6 +70,7 @@ _Note: The upper two modes are similar to Antic behaviour and the latter is simi
 
 ### 4. Cruise control
 - Press the cruise button (connected to **RX pin**, active low, same wiring as the wheelie button) to enter cruise at the current speed
+- Entry requires `abs_erpm > 100`, so a press while stationary is ignored
 - A PI speed controller maintains that speed by adjusting motor current
 - Press the cruise button again, or touch the brake (any ADC2 input), to exit cruise and return to normal throttle
 - Cruise is only available from `STATE_THROTTLE` — it is impossible to enter cruise while in wheelie mode

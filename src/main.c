@@ -1227,10 +1227,11 @@ static void refloat_thd(void *arg) {
 
             // Wheelie entry: Hold mode triggers immediately on button press (rising edge),
             // regardless of current pitch. None and Down use pitch-based auto-entry.
-            // Brake active always blocks entry.
+            // Brake active always blocks entry. Requiring the wheel to already be rolling
+            // prevents an accidental button press while stationary from engaging a wheelie.
             if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
                 d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD && d->wheelie_btn.pressed &&
-                !d->wheelie_btn.prev) {
+                !d->wheelie_btn.prev && d->motor.abs_erpm > 100) {
                 engage(d);
                 d->setpoint_target = d->float_conf.wheelie_target_pitch;
                 d->balance_current.value = d->throttle_current;
@@ -1250,8 +1251,9 @@ static void refloat_thd(void *arg) {
                 d->balance_current.value = d->throttle_current;
             }
 
-            // Cruise control entry: rising edge of cruise button
-            if (d->float_conf.cruise_enabled && d->cruise_btn.pressed && !d->cruise_btn.prev) {
+            // Cruise control entry: rising edge of cruise button, only while rolling
+            if (d->float_conf.cruise_enabled && d->cruise_btn.pressed && !d->cruise_btn.prev &&
+                d->motor.abs_erpm > 100) {
                 d->cruise_target_speed = d->motor.speed;
                 d->cruise_pid_i = 0;
                 state_cruise(&d->state);
