@@ -1236,6 +1236,9 @@ static void refloat_thd(void *arg) {
                 d->balance_current.value = d->throttle_current;
                 if (d->float_conf.wheelie_entry_rate > 0.0f) {
                     d->wheelie_entering = true;
+                } else {
+                    // 0 = instant: snap the interpolated setpoint straight to target
+                    d->setpoint_target_interpolated = d->setpoint_target;
                 }
             } else if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
                        (d->float_conf.wheelie_button_mode == WHEELIE_BTN_NONE ||
