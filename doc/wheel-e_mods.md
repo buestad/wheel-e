@@ -61,6 +61,7 @@ _Note: The upper two modes are similar to Antic behaviour and the latter is simi
 - Example auto-entry: target = 25°, tolerance = 4° → balance loop engages at 21°
 - **Re-entry hysteresis**: after any exit, re-entry is blocked until pitch drops back below `startup_pitch_tolerance`. Brake active always blocks entry.
 - **Rolling guard (`WHEELIE_BTN_HOLD` only)**: button-triggered entry also requires `abs_erpm > 100`, so an accidental press while stationary can't engage a wheelie.
+- **Pitch-lead clamp (`WHEELIE_BTN_HOLD` only)**: while the entry ramp is active, the setpoint is capped to `imu.balance_pitch + WHEELIE_MAX_PITCH_LEAD` (10°), regardless of `wheelie_entry_rate`. This stops the setpoint from racing ahead of the rider's actual pitch if the button is held without leaning in, which previously could build up a large PID error and cause a sudden lurch once the setpoint (or the bike) caught up or the button was released.
 - Throttle (ADC1) is **ignored** while in wheelie/balance mode; only leaning affects speed.
 
 

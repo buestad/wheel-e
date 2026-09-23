@@ -60,6 +60,9 @@
 HEADER
 
 #define MAIN_THREAD_FREQ 500
+// Max degrees the wheelie entry setpoint is allowed to lead the actual pitch;
+// keeps a stationary/non-leaning rider from building up a large PID error.
+#define WHEELIE_MAX_PITCH_LEAD 10.0f
 
 typedef enum {
     BEEP_NONE = 0,
@@ -999,14 +1002,20 @@ static void refloat_thd(void *arg) {
             calculate_setpoint_target(d);
             float step_size;
             if (d->wheelie_entering) {
-                float ramp_rate = d->float_conf.wheelie_entry_rate +
-                    fabsf(d->motor.speed) * d->float_conf.wheelie_entry_rate_factor;
-                if (ramp_rate > 0.0f) {
-                    ramp_rate = fmaxf(ramp_rate, 20.0f);
-                } else if (ramp_rate < 0.0f) {
-                    ramp_rate = 0.0f;
+                if (d->float_conf.wheelie_entry_rate > 0.0f) {
+                    float ramp_rate = d->float_conf.wheelie_entry_rate +
+                        fabsf(d->motor.speed) * d->float_conf.wheelie_entry_rate_factor;
+                    if (ramp_rate > 0.0f) {
+                        ramp_rate = fmaxf(ramp_rate, 20.0f);
+                    } else if (ramp_rate < 0.0f) {
+                        ramp_rate = 0.0f;
+                    }
+                    step_size = ramp_rate * dt;
+                } else {
+                    // 0 = instant: take an uncapped step, the pitch-lead clamp below still
+                    // prevents the setpoint from running away from the actual pitch.
+                    step_size = INFINITY;
                 }
-                step_size = ramp_rate * dt;
             } else if (d->wheelie_exiting) {
                 float ramp_rate = d->float_conf.wheelie_exit_rate +
                     fabsf(d->motor.speed) * d->float_conf.wheelie_exit_rate_factor;
@@ -1018,6 +1027,12 @@ static void refloat_thd(void *arg) {
                 step_size = get_setpoint_adjustment_speed(d) * dt;
             }
             rate_limitf(&d->setpoint_target_interpolated, d->setpoint_target, step_size);
+            if (d->wheelie_entering) {
+                // Don't let the setpoint outrun the rider's actual pitch while entering.
+                float max_setpoint = d->imu.balance_pitch + WHEELIE_MAX_PITCH_LEAD;
+                d->setpoint_target_interpolated =
+                    fminf(d->setpoint_target_interpolated, max_setpoint);
+            }
             d->setpoint = d->setpoint_target_interpolated;
 
             remote_update(&d->remote, &d->state, &d->float_conf, dt);
@@ -1235,12 +1250,9 @@ static void refloat_thd(void *arg) {
                 engage(d);
                 d->setpoint_target = d->float_conf.wheelie_target_pitch;
                 d->balance_current.value = d->throttle_current;
-                if (d->float_conf.wheelie_entry_rate > 0.0f) {
-                    d->wheelie_entering = true;
-                } else {
-                    // 0 = instant: snap the interpolated setpoint straight to target
-                    d->setpoint_target_interpolated = d->setpoint_target;
-                }
+                // Always ramp (rate 0 is treated as an uncapped/instant rate below), so the
+                // pitch-lead clamp in STATE_RUNNING applies uniformly regardless of rate.
+                d->wheelie_entering = true;
             } else if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
                        (d->float_conf.wheelie_button_mode == WHEELIE_BTN_NONE ||
                         d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN) &&
