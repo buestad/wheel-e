@@ -60,9 +60,11 @@
 HEADER
 
 #define MAIN_THREAD_FREQ 500
-// Max degrees the wheelie entry setpoint is allowed to lead the actual pitch;
-// keeps a stationary/non-leaning rider from building up a large PID error.
-#define WHEELIE_MAX_PITCH_LEAD 10.0f
+// Wheelie entry pitch-lead margin: how far the setpoint may run ahead of the
+// rider's actual pitch, derived from the rider's own tolerance/target settings
+// rather than a fixed value, so it scales with how the bike is already tuned.
+#define WHEELIE_LEAD_TOLERANCE_MULT 2.0f
+#define WHEELIE_LEAD_MAX_FRACTION 0.4f
 
 typedef enum {
     BEEP_NONE = 0,
@@ -266,6 +268,7 @@ static void reset_runtime_vars(Data *d) {
     d->wheelie_entry_armed = true;
     d->wheelie_exiting = false;
     d->wheelie_entering = false;
+    d->wheelie_lead_clamped = false;
     d->cruise_pid_i = 0;
     ema_reset(&d->balance_current, 0.0f);
 
@@ -948,6 +951,9 @@ static void refloat_thd(void *arg) {
                     d->wheelie_entering = false;
                     d->wheelie_exiting = true;
                     d->setpoint_target = 0;
+                    if (d->wheelie_lead_clamped) {
+                        d->pid.i = 0;
+                    }
                 } else {
                     // Instant exit
                     state_throttle(&d->state);
@@ -971,6 +977,9 @@ static void refloat_thd(void *arg) {
                         d->wheelie_entering = false;
                         d->wheelie_exiting = true;
                         d->setpoint_target = 0;
+                        if (d->wheelie_lead_clamped) {
+                            d->pid.i = 0;
+                        }
                     } else {
                         state_throttle(&d->state);
                         d->throttle_current = d->balance_current.value;
@@ -1029,9 +1038,16 @@ static void refloat_thd(void *arg) {
             rate_limitf(&d->setpoint_target_interpolated, d->setpoint_target, step_size);
             if (d->wheelie_entering) {
                 // Don't let the setpoint outrun the rider's actual pitch while entering.
-                float max_setpoint = d->imu.balance_pitch + WHEELIE_MAX_PITCH_LEAD;
-                d->setpoint_target_interpolated =
-                    fminf(d->setpoint_target_interpolated, max_setpoint);
+                float max_lead = clampf(
+                    d->float_conf.startup_pitch_tolerance * WHEELIE_LEAD_TOLERANCE_MULT,
+                    0.0f,
+                    d->float_conf.wheelie_target_pitch * WHEELIE_LEAD_MAX_FRACTION
+                );
+                float max_setpoint = d->imu.balance_pitch + max_lead;
+                if (d->setpoint_target_interpolated > max_setpoint) {
+                    d->setpoint_target_interpolated = max_setpoint;
+                    d->wheelie_lead_clamped = true;
+                }
             }
             d->setpoint = d->setpoint_target_interpolated;
 

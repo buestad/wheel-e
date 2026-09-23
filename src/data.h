@@ -113,6 +113,9 @@ typedef struct {
     bool wheelie_entry_armed;
     bool wheelie_exiting;
     bool wheelie_entering;
+    // True once the pitch-lead clamp has had to hold the setpoint back during this
+    // wheelie attempt, meaning the rider's pitch never tracked the setpoint properly.
+    bool wheelie_lead_clamped;
     float wheelie_exit_step_size;
     IoButton wheelie_btn;
 
