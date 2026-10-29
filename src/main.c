@@ -990,6 +990,20 @@ static void refloat_thd(void *arg) {
                 }
             }
 
+            // Wheelie auto-exit (NONE mode only): there is no button or required brake
+            // tap to end a wheelie in this mode, so if the rider lets the nose drop back
+            // down near level on their own (without braking), mirror the pitch-based
+            // auto-entry and return to throttle instead of continuing to chase
+            // wheelie_target_pitch, which would otherwise keep driving the motor forward.
+            if (!d->wheelie_exiting && !d->wheelie_entering &&
+                d->float_conf.wheelie_button_mode == WHEELIE_BTN_NONE &&
+                d->imu.balance_pitch < d->float_conf.startup_pitch_tolerance) {
+                state_throttle(&d->state);
+                d->throttle_current = d->balance_current.value;
+                d->wheelie_entry_armed = false;
+                break;
+            }
+
             // Wheelie exit ramp: once setpoint has reached entry threshold, transition to throttle
             if (d->wheelie_exiting &&
                 d->setpoint_target_interpolated <= d->float_conf.startup_pitch_tolerance) {
