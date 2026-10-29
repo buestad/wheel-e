@@ -148,6 +148,7 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 
 | Field | Type | Default | Description |
 |---|---|---|---|
+| `wheelie_enabled` | `bool` | true | Master on/off switch for wheelie mode. When false, entry (button or pitch-triggered) is blocked and an in-progress wheelie exits immediately back to `STATE_THROTTLE` |
 | `wheelie_target_pitch` | `float` | 25° | Pitch angle the balance loop holds in wheelie mode |
 | `wheelie_entry_rate` | `float` | 0 °/s | Rate to ramp setpoint up to target on entry; 0 = instant; values 1–19 are clamped to 20 °/s minimum |
 | `wheelie_entry_rate_factor` | `float` | 0 °/s per km/h | Speed-dependent adjustment: effective entry rate = `wheelie_entry_rate + abs(speed_kmh) × factor`; clamped to 0 |
@@ -183,7 +184,7 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 - Added serialization order entries after `remote_throttle_grace_period`
 - Added a new **Bike** subgroup under the **General** group with four UI separator sections:
   - **Throttle mode**: `throttle_current_deadband`, `throttle_adc1_voltage_min`, `throttle_adc1_voltage_center`, `throttle_adc1_voltage_max`, `throttle_adc1_invert`, `throttle_adc2_voltage_min`, `throttle_adc2_voltage_max`, `throttle_adc2_invert`, `throttle_adc_filter`
-  - **Wheelie mode**: `wheelie_target_pitch`, `wheelie_entry_rate`, `wheelie_entry_rate_factor`, `wheelie_exit_rate`, `wheelie_exit_rate_factor`, `wheelie_button_mode`
+  - **Wheelie mode**: `wheelie_enabled`, `wheelie_target_pitch`, `wheelie_entry_rate`, `wheelie_entry_rate_factor`, `wheelie_exit_rate`, `wheelie_exit_rate_factor`, `wheelie_button_mode`
   - **Cruise control**: `cruise_enabled`, `cruise_kp`, `cruise_ki`
   - **Slave VESC (2WD)**: `can_forward_id`
 

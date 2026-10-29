@@ -1538,6 +1538,18 @@ p, li { white-space: pre-wrap; }
             <suffix> s</suffix>
             <vTx>7</vTx>
         </remote_throttle_grace_period>
+        <wheelie_enabled>
+            <longName>Enable Wheelie Mode</longName>
+            <type>5</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Enable wheelie mode entirely. When disabled, the bike never enters the balance loop and always rides in normal two-wheel throttle mode, regardless of button or pitch triggers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>CFG_DFLT_WHEELIE_ENABLED</cDefine>
+            <valInt>1</valInt>
+        </wheelie_enabled>
         <wheelie_target_pitch>
             <longName>Wheelie Target Pitch</longName>
             <type>1</type>
@@ -4540,6 +4552,7 @@ p, li { white-space: pre-wrap; }
         <ser>inputtilt_deadband</ser>
         <ser>remote.max_move_speed</ser>
         <ser>remote_throttle_grace_period</ser>
+        <ser>wheelie_enabled</ser>
         <ser>wheelie_target_pitch</ser>
         <ser>wheelie_entry_rate</ser>
         <ser>wheelie_entry_rate_factor</ser>
@@ -4696,6 +4709,7 @@ p, li { white-space: pre-wrap; }
                     <param>throttle_adc2_invert</param>
                     <param>throttle_adc_filter</param>
                     <param>::sep::Wheelie mode</param>
+                    <param>wheelie_enabled</param>
                     <param>wheelie_target_pitch</param>
                     <param>wheelie_entry_rate</param>
                     <param>wheelie_entry_rate_factor</param>

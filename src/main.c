@@ -940,6 +940,18 @@ static void refloat_thd(void *arg) {
 
             d->enable_upside_down = true;
 
+            // If wheelie mode gets disabled while a wheelie is already in progress,
+            // bail out immediately instead of waiting for a brake/button exit that
+            // may never come.
+            if (!d->float_conf.wheelie_enabled) {
+                state_throttle(&d->state);
+                d->throttle_current = d->balance_current.value;
+                d->wheelie_entry_armed = false;
+                d->wheelie_entering = false;
+                d->wheelie_exiting = false;
+                break;
+            }
+
             // Wheelie exit: brake pressed on ADC2 -> begin exit sequence.
             // DOWN and HOLD modes always exit instantly on brake regardless of exit rate.
             // NONE mode respects the exit ramp if configured.
@@ -1274,16 +1286,17 @@ static void refloat_thd(void *arg) {
             // regardless of current pitch. None and Down use pitch-based auto-entry.
             // Brake active always blocks entry. Requiring the wheel to already be rolling
             // prevents an accidental button press while stationary from engaging a wheelie.
-            if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
-                d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD && d->wheelie_btn.pressed &&
-                !d->wheelie_btn.prev && d->motor.abs_erpm > 100) {
+            if (d->float_conf.wheelie_enabled && d->footpad.adc2_mapped == 0.0f &&
+                d->wheelie_entry_armed && d->float_conf.wheelie_button_mode == WHEELIE_BTN_HOLD &&
+                d->wheelie_btn.pressed && !d->wheelie_btn.prev && d->motor.abs_erpm > 100) {
                 engage(d);
                 d->setpoint_target = d->float_conf.wheelie_target_pitch;
                 d->balance_current.value = d->throttle_current;
                 // Always ramp (rate 0 is treated as an uncapped/instant rate below), so the
                 // pitch-lead clamp in STATE_RUNNING applies uniformly regardless of rate.
                 d->wheelie_entering = true;
-            } else if (d->footpad.adc2_mapped == 0.0f && d->wheelie_entry_armed &&
+            } else if (d->float_conf.wheelie_enabled && d->footpad.adc2_mapped == 0.0f &&
+                       d->wheelie_entry_armed &&
                        (d->float_conf.wheelie_button_mode == WHEELIE_BTN_NONE ||
                         d->float_conf.wheelie_button_mode == WHEELIE_BTN_DOWN) &&
                        d->imu.balance_pitch >= (d->float_conf.wheelie_target_pitch -

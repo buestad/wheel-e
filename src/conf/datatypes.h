@@ -355,6 +355,7 @@ typedef struct {
     float throttle_regen_percent;
 
     // Bike Wheelie mode
+    bool wheelie_enabled;
     float wheelie_target_pitch;
     float wheelie_entry_rate;
     float wheelie_entry_rate_factor;
