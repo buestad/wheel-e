@@ -1823,6 +1823,42 @@ p, li { white-space: pre-wrap; }
             <suffix> s</suffix>
             <vTx>7</vTx>
         </throttle_ramp_time>
+        <throttle_speed_limit>
+            <longName>Throttle Speed Limit</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>Soft speed limit in km/h. Throttle current fades out as speed approaches the limit. Brake and regen are unaffected. 0 = disabled.</description>
+            <cDefine>CFG_DFLT_THROTTLE_SPEED_LIMIT</cDefine>
+            <editorDecimalsDouble>0</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>100</maxDouble>
+            <minDouble>0</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>1</stepDouble>
+            <valDouble>0</valDouble>
+            <vTxDoubleScale>10</vTxDoubleScale>
+            <suffix> km/h</suffix>
+            <vTx>7</vTx>
+        </throttle_speed_limit>
+        <throttle_speed_fade>
+            <longName>Throttle Speed Limit Fade</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>Speed range in km/h below the limit over which throttle current fades to zero.</description>
+            <cDefine>CFG_DFLT_THROTTLE_SPEED_FADE</cDefine>
+            <editorDecimalsDouble>1</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>20</maxDouble>
+            <minDouble>0.5</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>0.5</stepDouble>
+            <valDouble>3</valDouble>
+            <vTxDoubleScale>10</vTxDoubleScale>
+            <suffix> km/h</suffix>
+            <vTx>7</vTx>
+        </throttle_speed_fade>
         <throttle_adc1_voltage_min>
             <longName>Throttle ADC1 Voltage Min</longName>
             <type>1</type>
@@ -4711,6 +4747,8 @@ p, li { white-space: pre-wrap; }
         <ser>throttle_brake_percent</ser>
         <ser>throttle_brake_ramp_time</ser>
         <ser>throttle_ramp_time</ser>
+        <ser>throttle_speed_limit</ser>
+        <ser>throttle_speed_fade</ser>
     </SerOrder>
     <Grouping>
         <group>
@@ -4723,6 +4761,8 @@ p, li { white-space: pre-wrap; }
                     <param>throttle_brake_percent</param>
                     <param>throttle_brake_ramp_time</param>
                     <param>throttle_ramp_time</param>
+                    <param>throttle_speed_limit</param>
+                    <param>throttle_speed_fade</param>
                     <param>throttle_regen_percent</param>
                     <param>throttle_adc1_voltage_min</param>
                     <param>throttle_adc1_voltage_center</param>

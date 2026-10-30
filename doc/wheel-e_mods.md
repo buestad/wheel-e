@@ -162,6 +162,8 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 | `throttle_brake_percent` | `float` | 50 % | Max brake force from ADC2 lever as % of motor config brake current limit |
 | `throttle_brake_ramp_time` | `float` | 0.2 s | Time to ramp ADC2 from 0 to full when lever is pressed; 0 = instant |
 | `throttle_ramp_time` | `float` | 0 s | Time to ramp ADC1 throttle from 0 to full when applied; release is instant; 0 = no ramp |
+| `throttle_speed_limit` | `float` | 0 km/h | Soft speed limit: throttle current fades out approaching it; brake/regen unaffected; also clamps cruise target; 0 = disabled |
+| `throttle_speed_fade` | `float` | 3 km/h | Speed range below the limit over which throttle current fades to zero |
 | `throttle_regen_percent` | `float` | 0 % | Regen brake strength on throttle release as % of motor config brake current limit; 0 = disabled |
 | `throttle_adc1_voltage_min` | `float` | 0.5V | ADC1 voltage mapping to 0% current |
 | `throttle_adc1_voltage_center` | `float` | 1.65V | ADC1 voltage mapping to 50% current |

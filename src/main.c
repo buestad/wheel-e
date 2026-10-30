@@ -1254,6 +1254,13 @@ static void refloat_thd(void *arg) {
                 }
             } else if (d->throttle_val > 0) {
                 current = d->throttle_val * d->motor.current_max;
+
+                // Soft speed limit: fade throttle current out over the last fade km/h
+                float limit = d->float_conf.throttle_speed_limit;
+                if (limit > 0.0f) {
+                    float fade = fmaxf(d->float_conf.throttle_speed_fade, 0.1f);
+                    current *= clampf((limit - fabsf(d->motor.speed)) / fade, 0.0f, 1.0f);
+                }
             }
 
             // set current request. Ignore current below deadband
@@ -1310,6 +1317,10 @@ static void refloat_thd(void *arg) {
             if (d->float_conf.cruise_enabled && d->cruise_btn.pressed && !d->cruise_btn.prev &&
                 d->motor.abs_erpm > 100) {
                 d->cruise_target_speed = d->motor.speed;
+                float limit = d->float_conf.throttle_speed_limit;
+                if (limit > 0.0f) {
+                    d->cruise_target_speed = clampf(d->cruise_target_speed, -limit, limit);
+                }
                 d->cruise_pid_i = 0;
                 state_cruise(&d->state);
                 break;
