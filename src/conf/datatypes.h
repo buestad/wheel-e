@@ -352,6 +352,7 @@ typedef struct {
     float throttle_adc_filter;
     float throttle_brake_percent;
     float throttle_brake_ramp_time;
+    float throttle_ramp_time;
     float throttle_regen_percent;
 
     // Bike Wheelie mode

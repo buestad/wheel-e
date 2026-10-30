@@ -161,6 +161,7 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 | `throttle_current_deadband` | `float` | 1.0A | Current commands below this are suppressed to zero |
 | `throttle_brake_percent` | `float` | 50 % | Max brake force from ADC2 lever as % of motor config brake current limit |
 | `throttle_brake_ramp_time` | `float` | 0.2 s | Time to ramp ADC2 from 0 to full when lever is pressed; 0 = instant |
+| `throttle_ramp_time` | `float` | 0 s | Time to ramp ADC1 throttle from 0 to full when applied; release is instant; 0 = no ramp |
 | `throttle_regen_percent` | `float` | 0 % | Regen brake strength on throttle release as % of motor config brake current limit; 0 = disabled |
 | `throttle_adc1_voltage_min` | `float` | 0.5V | ADC1 voltage mapping to 0% current |
 | `throttle_adc1_voltage_center` | `float` | 1.65V | ADC1 voltage mapping to 50% current |
@@ -474,6 +475,7 @@ When deploying on a bike, set the following in the VESC Tool UI:
 |Refloat Cfg → Bike | Throttle Current Deadband (`throttle_current_deadband`) | `1.0` | Current commands below this (A) are suppressed to zero |
 |Refloat Cfg → Bike | Brake Lever Strength (`throttle_brake_percent`) | `50` | Max brake current as % of motor config brake current limit; 100 % = full braking |
 |Refloat Cfg → Bike | Brake Lever Ramp Time (`throttle_brake_ramp_time`) | `0.2` | Seconds to ramp from 0 to max brake on lever press; 0 = instant (useful for analog levers) |
+|Refloat Cfg → Bike | Throttle Ramp Time (`throttle_ramp_time`) | `0` | Seconds to ramp from 0 to full throttle when applied; release is instant; 0 = no ramp |
 |Refloat Cfg → Bike | Regen Brake Strength (`throttle_regen_percent`) | `0` | % of motor config brake current limit applied as regen when throttle is released; 0 = disabled |
 |Refloat Cfg → Bike | Throttle ADC1 Voltage Min (`throttle_adc1_voltage_min`) | `0.5` | ADC1 voltage at 0% throttle; adjust to match hardware rest voltage |
 |Refloat Cfg → Bike | Throttle ADC1 Voltage Center (`throttle_adc1_voltage_center`) | `1.65` | ADC1 voltage at 50% current |
