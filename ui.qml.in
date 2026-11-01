@@ -7477,18 +7477,21 @@ Item {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     height: wheelieSwitchColumn.height + 0.2 * unit
+                    readonly property real wheelieLabelHeight: 0.5 * unit
 
                     Row {
-                        anchors.centerIn: parent
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 2 * unit
                         spacing: 0.25 * unit
 
                         Column {
                             id: wheelieSwitchColumn
-                            anchors.verticalCenter: parent.verticalCenter
 
                             LText {
                                 text: "Enable wheelie"
+                                height: wheelieAngleControl.wheelieLabelHeight
+                                verticalAlignment: Text.AlignVCenter
                                 opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
                             }
 
@@ -7506,16 +7509,20 @@ Item {
                         }
 
                         Column {
-                            anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - wheelieSwitchColumn.width - parent.spacing
 
                             LText {
                                 text: "Wheelie angle"
+                                height: wheelieAngleControl.wheelieLabelHeight
+                                verticalAlignment: Text.AlignVCenter
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
                                 opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
                             }
 
                             Row {
                                 width: parent.width
+                                height: wheelieEnabledSwitch.height
                                 spacing: 0.25 * unit
 
                                 TapSlider {
@@ -7546,6 +7553,20 @@ Item {
                                 }
                             }
                         }
+                    }
+
+                    function reloadFromConfig() {
+                        if (!packageConfig.checkConfig()) return;
+
+                        wheelieEnabledSwitch.checked = packageConfig.getParamValue("wheelie_enabled");
+                        wheelieAngleSlider.value = packageConfig.getParamValue("wheelie_target_pitch");
+                    }
+
+                    Component.onCompleted: reloadFromConfig()
+
+                    Connections {
+                        target: packageConfig
+                        function onUpdate() { wheelieAngleControl.reloadFromConfig(); }
                     }
 
                     Timer {
