@@ -32,4 +32,4 @@ Wheel-E is a VESC Package for electric mini-bikes with a wheelie mode. The packa
 
 ## Project status
 As of 01.11.2026: Code tested by author and a few other users. The bikes used for testing are custom DIY mini-bikes.
-Special thanks to the memebers of the project discussion channel on Discord: [Vescify / Projects / Wheel-E](https://discord.com/channels/846794200308908065/1494378063352561704)
+Special thanks to the members of the project discussion channel on Discord: [Vescify / Projects / Wheel-E](https://discord.com/channels/846794200308908065/1494378063352561704)

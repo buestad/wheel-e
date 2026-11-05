@@ -1457,8 +1457,10 @@ static void aux_thd(void *arg) {
 
         leds_update(&d->leds, &d->state, &d->motor, d->footpad.state);
 
-        // store odometer if we've gone more than 200m
-        if (!running && VESC_IF->mc_get_odometer() > d->odometer + 200) {
+        // store odometer if we've gone more than 200m. Only while the motor is nearly stopped,
+        // since the flash write can disturb motor control while spinning.
+        if (!running && d->motor.abs_erpm <= 100 &&
+            VESC_IF->mc_get_odometer() > d->odometer + 200) {
             VESC_IF->store_backup_data();
             d->odometer = VESC_IF->mc_get_odometer();
         }
