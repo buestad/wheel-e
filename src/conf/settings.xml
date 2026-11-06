@@ -1679,6 +1679,28 @@ p, li { white-space: pre-wrap; }
             <enumNames>Down</enumNames>
             <enumNames>Hold</enumNames>
         </wheelie_button_mode>
+        <wheelie_throttle_angle>
+            <longName>Wheelie Throttle Angle</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Maximum angle (degrees) added to the wheelie target pitch based on throttle position while in wheelie mode. 0 disables this feature. A positive value increases the pitch target as the throttle is twisted further, a negative value decreases it. The configured Wheelie Target Pitch itself is never modified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>CFG_DFLT_WHEELIE_THROTTLE_ANGLE</cDefine>
+            <editorDecimalsDouble>1</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>10</maxDouble>
+            <minDouble>-10</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>0.5</stepDouble>
+            <valDouble>0</valDouble>
+            <vTxDoubleScale>100</vTxDoubleScale>
+            <suffix> °</suffix>
+            <vTx>7</vTx>
+        </wheelie_throttle_angle>
         <cruise_enabled>
             <longName>Enable Cruise Control</longName>
             <type>5</type>
@@ -4617,6 +4639,7 @@ p, li { white-space: pre-wrap; }
         <ser>wheelie_exit_rate</ser>
         <ser>wheelie_exit_rate_factor</ser>
         <ser>wheelie_button_mode</ser>
+        <ser>wheelie_throttle_angle</ser>
         <ser>cruise_enabled</ser>
         <ser>cruise_kp</ser>
         <ser>cruise_ki</ser>
@@ -4780,6 +4803,7 @@ p, li { white-space: pre-wrap; }
                     <param>wheelie_exit_rate</param>
                     <param>wheelie_exit_rate_factor</param>
                     <param>wheelie_button_mode</param>
+                    <param>wheelie_throttle_angle</param>
                     <param>::sep::Cruise control</param>
                     <param>cruise_enabled</param>
                     <param>cruise_kp</param>

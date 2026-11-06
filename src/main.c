@@ -1077,6 +1077,16 @@ static void refloat_thd(void *arg) {
             }
             d->setpoint = d->setpoint_target_interpolated;
 
+            // Throttle twist adds a runtime offset on top of the configured (stored)
+            // wheelie target pitch. Applied directly to `setpoint` (like the remote
+            // input-tilt offset below) rather than through `setpoint_target`, so it
+            // responds instantly instead of being throttled by tiltback_return_speed.
+            // adc1_mapped is 0..1 and scales linearly up to wheelie_throttle_angle.
+            // Skipped during the exit ramp so it doesn't fight the ramp back to 0.
+            if (!d->wheelie_exiting) {
+                d->setpoint += d->float_conf.wheelie_throttle_angle * d->footpad.adc1_mapped;
+            }
+
             remote_update(&d->remote, &d->state, &d->float_conf, dt);
             d->setpoint += d->remote.setpoint.value;
 

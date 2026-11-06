@@ -365,6 +365,7 @@ typedef struct {
     float wheelie_exit_rate;
     float wheelie_exit_rate_factor;
     WheelieButtonMode wheelie_button_mode;
+    float wheelie_throttle_angle;
 
     // Bike Cruise control
     bool cruise_enabled;

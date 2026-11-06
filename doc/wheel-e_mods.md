@@ -63,7 +63,19 @@ _Note: The upper two modes are similar to Antic behaviour and the latter is simi
 - **Rolling guard (`WHEELIE_BTN_HOLD` only)**: button-triggered entry also requires `abs_erpm > 100`, so an accidental press while stationary can't engage a wheelie.
 - **Pitch-lead clamp (`WHEELIE_BTN_HOLD` only)**: while the entry ramp is active, the setpoint is capped to `imu.balance_pitch + max_lead`, regardless of `wheelie_entry_rate`. `max_lead` is derived from the rider's own settings rather than a fixed value: `clamp(startup_pitch_tolerance × 2, 0, wheelie_target_pitch × 0.4)` (e.g. tolerance = 4°, target = 25° → 8° lead). This stops the setpoint from racing ahead of the rider's actual pitch if the button is held without leaning in, which previously could build up a large PID error and cause a sudden lurch once the setpoint (or the bike) caught up or the button was released.
 - **Integral reset on clamped exit**: if the pitch-lead clamp ever engaged during a wheelie attempt (rider held the button without leaning in), the accumulated PID integral (`pid.i`) is zeroed at the start of a ramped exit, so the stale error doesn't keep driving torque throughout the exit ramp. Well-tracked wheelies where the clamp never engages are unaffected, and instant exits (button-release on `WHEELIE_BTN_DOWN`, or any brake exit) are unaffected since the PID stops immediately there regardless.
-- Throttle (ADC1) is **ignored** while in wheelie/balance mode; only leaning affects speed.
+- Throttle (ADC1) does **not** drive the motor directly while in wheelie/balance mode; only leaning affects speed. Optionally, it can instead modulate the runtime pitch angle target — see **2a** below.
+
+### 2a. Throttle-controlled wheelie angle (`wheelie_throttle_angle`)
+
+- `wheelie_throttle_angle` (°, default `0`, range `-10` to `+10`) lets the rider fine-tune the balance pitch target in real time by twisting the throttle, instead of it being purely fixed at `wheelie_target_pitch`.
+- Applied in `refloat_thd()`, directly to `d->setpoint` right after `d->setpoint = d->setpoint_target_interpolated;` — the same pattern used by the remote/input-tilt offset immediately below it — rather than through `calculate_setpoint_target()`'s `setpoint_target`:
+  `setpoint = setpoint_target_interpolated + wheelie_throttle_angle × adc1_mapped`
+- This is deliberate: `setpoint_target` changes are rate-limited each iteration by `get_setpoint_adjustment_speed()`, which in the normal-running (`SAT_NONE`) case returns `tiltback_return_speed` (default `1 °/s`). Routing the throttle offset through `setpoint_target` would make it crawl toward the new angle at that slow pushback-recovery rate (multiple seconds to move a few degrees) instead of responding instantly to throttle movement.
+- The mapped throttle value (`footpad.adc1_mapped`, 0–1) is scaled linearly: `adc1_mapped = 0` (throttle released) → no offset; `adc1_mapped = 1` (throttle fully twisted) → the full `wheelie_throttle_angle` is added, with no ramping — the offset tracks the throttle 1:1 every control loop iteration.
+- A positive value raises the nose further as the throttle is twisted; a negative value lowers it.
+- Setting `wheelie_throttle_angle = 0` (the default) disables the feature entirely — `setpoint` is exactly `setpoint_target_interpolated`, matching prior behaviour.
+- This only changes the **runtime** `setpoint`; the stored `wheelie_target_pitch` config value and `setpoint_target`/`setpoint_target_interpolated` ramping are never modified.
+- The offset is skipped while `wheelie_exiting` so it doesn't fight the exit ramp back to 0°.
 
 
 ### 3. Safety / rider presence
@@ -155,6 +167,7 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 | `wheelie_exit_rate` | `float` | 0 °/s | Rate to ramp setpoint down to 0° on exit; 0 = instant; values 1–19 are clamped to 20 °/s minimum |
 | `wheelie_exit_rate_factor` | `float` | 0 °/s per km/h | Speed-dependent adjustment: effective exit rate = `wheelie_exit_rate + abs(speed_kmh) × factor`; clamped to 0 |
 | `wheelie_button_mode` | `WheelieButtonMode` | None | How the button on TX/SCL interacts with wheelie entry/exit |
+| `wheelie_throttle_angle` | `float` | 0° | Max angle added to `wheelie_target_pitch` at full throttle (`adc1_mapped`), scaled linearly; 0 = disabled; can be negative |
 | `cruise_enabled` | `bool` | false | Enables cruise control and configures RX pin as pull-up input |
 | `cruise_kp` | `float` | 2.0 A/(km/h) | Proportional gain for cruise PI controller |
 | `cruise_ki` | `float` | 0.5 A/(km/h·s) | Integral gain for cruise PI controller |
@@ -187,7 +200,7 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 - Added serialization order entries after `remote_throttle_grace_period`
 - Added a new **Bike** subgroup under the **General** group with four UI separator sections:
   - **Throttle mode**: `throttle_current_deadband`, `throttle_adc1_voltage_min`, `throttle_adc1_voltage_center`, `throttle_adc1_voltage_max`, `throttle_adc1_invert`, `throttle_adc2_voltage_min`, `throttle_adc2_voltage_max`, `throttle_adc2_invert`, `throttle_adc_filter`
-  - **Wheelie mode**: `wheelie_enabled`, `wheelie_target_pitch`, `wheelie_entry_rate`, `wheelie_entry_rate_factor`, `wheelie_exit_rate`, `wheelie_exit_rate_factor`, `wheelie_button_mode`
+  - **Wheelie mode**: `wheelie_enabled`, `wheelie_target_pitch`, `wheelie_entry_rate`, `wheelie_entry_rate_factor`, `wheelie_exit_rate`, `wheelie_exit_rate_factor`, `wheelie_button_mode`, `wheelie_throttle_angle`
   - **Cruise control**: `cruise_enabled`, `cruise_kp`, `cruise_ki`
   - **Slave VESC (2WD)**: `can_forward_id`
 
@@ -229,7 +242,7 @@ d->setpoint_target = 0;
 // After:
 d->setpoint_target = d->float_conf.wheelie_target_pitch;
 ```
-The balance equilibrium is now the configured wheelie angle, not level.
+The balance equilibrium is now the configured wheelie angle, not level. (The throttle-controlled runtime offset, `wheelie_throttle_angle`, is applied separately, directly to `d->setpoint` — see **2a** above and the `refloat_thd()` entry below — rather than here, so it isn't rate-limited by `tiltback_return_speed`.)
 
 #### `STATE_STARTUP` transition
 ```c
@@ -474,6 +487,7 @@ When deploying on a bike, set the following in the VESC Tool UI:
 |Refloat Cfg → Bike | Wheelie Exit Rate (`wheelie_exit_rate`) | `0` or `30-90` | °/s to ramp setpoint down on exit; 0 = instant; minimum 20 °/s enforced for non-zero values |
 |Refloat Cfg → Bike | Wheelie Exit Rate Factor (`wheelie_exit_rate_factor`) | `0` | °/s added per km/h of bike speed during exit ramp |
 |Refloat Cfg → Bike | Wheelie Button Mode (`wheelie_button_mode`) | `None` | Button on TX pin: None / Down / Hold |
+|Refloat Cfg → Bike | Wheelie Throttle Angle (`wheelie_throttle_angle`) | `0` | Max degrees added to the wheelie target by twisting the throttle; 0 = disabled |
 |Refloat Cfg → Bike | Throttle Current Deadband (`throttle_current_deadband`) | `1.0` | Current commands below this (A) are suppressed to zero |
 |Refloat Cfg → Bike | Brake Lever Strength (`throttle_brake_percent`) | `50` | Max brake current as % of motor config brake current limit; 100 % = full braking |
 |Refloat Cfg → Bike | Brake Lever Ramp Time (`throttle_brake_ramp_time`) | `0.2` | Seconds to ramp from 0 to max brake on lever press; 0 = instant (useful for analog levers) |

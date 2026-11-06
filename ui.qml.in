@@ -7237,12 +7237,11 @@ Item {
                             onPaint: {
                                 var context = getContext("2d");
                                 context.reset()
+                                paintPath(context, [pitchBikeFramePath, pitchBikeForkPath, pitchBikeSeatPath, pitchBikeWheel1Path, pitchBikeWheel2Path], parent.setpointValue, 73.95, 28.37, "orange");
                                 paintPath(context, [pitchBikeFramePath, pitchBikeForkPath, pitchBikeSeatPath, pitchBikeWheel1Path, pitchBikeWheel2Path], parent.balancePitchValue, 73.95, 28.37, "lightAccent");
                                 paintPath(context, [pitchBikeFramePath, pitchBikeForkPath, pitchBikeSeatPath, pitchBikeWheel1Path, pitchBikeWheel2Path], parent.pitchValue, 73.95, 28.37, "lightText");
                                 //paintPath(context, [pitchBoardPath], parent.balancePitchValue, "lightAccent");
                                 //paintPath(context, [pitchBoardPath, pitchWheelPath], parent.pitchValue, "lightText");
-                                context.globalAlpha = parent.runtimeOpacity;
-                                //paintPath(context, [pitchSetpointPath], parent.setpointValue, "orange");
                             }
                         }
 
