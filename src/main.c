@@ -1084,7 +1084,11 @@ static void refloat_thd(void *arg) {
             // adc1_mapped is 0..1 and scales linearly up to wheelie_throttle_angle.
             // Skipped during the exit ramp so it doesn't fight the ramp back to 0.
             if (!d->wheelie_exiting) {
-                d->setpoint += d->float_conf.wheelie_throttle_angle * d->footpad.adc1_mapped;
+                d->wheelie_throttle_offset =
+                    d->float_conf.wheelie_throttle_angle * d->footpad.adc1_mapped;
+                d->setpoint += d->wheelie_throttle_offset;
+            } else {
+                d->wheelie_throttle_offset = 0.0f;
             }
 
             remote_update(&d->remote, &d->state, &d->float_conf, dt);

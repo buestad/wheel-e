@@ -2198,6 +2198,7 @@ Item {
         ["turn_tilt.setpoint", {"name": "Turn Tilt Setpoint", "color": "#e095af", "visible": false, "scalingGroup": "pitch"}],
         ["remote.setpoint", {"name": "Remote Setpoint", "color": "#803a4d", "visible": false, "scalingGroup": "pitch"}],
         ["setpoint", {"name": "Setpoint", "color": "#e57e20", "visible": true, "scalingGroup": "pitch"}],
+        ["wheelie_throttle_offset", {"name": "Wheelie Throttle Offset", "color": "#a2678e", "visible": false, "scalingGroup": "pitch"}],
 
         ["speed", {"name": "Speed", "color": "#3f9469", "visible": false}],
         ["batt_voltage", {"name": "Battery Voltage", "color": "#6e6ee0", "visible": false}],
@@ -7004,6 +7005,13 @@ Item {
                             // property real leftVoltage: state.rtData["adc_left"]
                             // property real rightVoltage: state.rtData["adc_right"]
 
+                            // In wheelie mode, show the throttle-twist offset currently added to
+                            // the wheelie target pitch (0 = throttle not twisted), instead of the
+                            // (frozen) two-wheel throttle value. Range matches the fixed
+                            // Wheelie Throttle Angle setting bounds (-10..10 degrees).
+                            property bool wheelieMode: state.pkgState === state.s_Running
+                            property real wheelieThrottleOffsetDeg: state.rtData["wheelie_throttle_offset"] || 0
+
                             NText {
                                 id: throttleDialLabel
                                 anchors.bottom: parent.bottom
@@ -7011,7 +7019,7 @@ Item {
 
                                 font.pixelSize: fontSizeSmall
                                 horizontalAlignment: Text.AlignHCenter
-                                text: "throttle"
+                                text: parent.wheelieMode ? "tilt mod" : "throttle"
                             }
 
                             Dial {
@@ -7021,11 +7029,11 @@ Item {
                                 width: parent.width
                                 height: width
 
-                                value: parent.throttlePct
+                                value: parent.wheelieMode ? parent.wheelieThrottleOffsetDeg : parent.throttlePct
                                 allowNegative: true
-                                minValue: -100
-                                maxValue: 100
-                                valueUnit: "%"
+                                minValue: parent.wheelieMode ? -10 : -100
+                                maxValue: parent.wheelieMode ? 10 : 100
+                                valueUnit: parent.wheelieMode ? "°" : "%"
                             }
                         }
 

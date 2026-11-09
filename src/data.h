@@ -113,6 +113,9 @@ typedef struct {
     bool wheelie_entry_armed;
     bool wheelie_exiting;
     bool wheelie_entering;
+    // Runtime offset currently added to the wheelie setpoint by throttle twist
+    // (wheelie_throttle_angle * adc1_mapped), 0 when not wheelieing / not twisted.
+    float wheelie_throttle_offset;
     // True once the pitch-lead clamp has had to hold the setpoint back during this
     // wheelie attempt, meaning the rider's pitch never tracked the setpoint properly.
     bool wheelie_lead_clamped;

@@ -76,6 +76,7 @@ _Note: The upper two modes are similar to Antic behaviour and the latter is simi
 - Setting `wheelie_throttle_angle = 0` (the default) disables the feature entirely — `setpoint` is exactly `setpoint_target_interpolated`, matching prior behaviour.
 - This only changes the **runtime** `setpoint`; the stored `wheelie_target_pitch` config value and `setpoint_target`/`setpoint_target_interpolated` ramping are never modified.
 - The offset is skipped while `wheelie_exiting` so it doesn't fight the exit ramp back to 0°.
+- The applied offset is also stored in `d->wheelie_throttle_offset` and exposed as a realtime data item, so the UI's HUD throttle gauge can show it directly (see `ui.qml.in` entry below) instead of displaying a frozen throttle value while wheelieing.
 
 
 ### 3. Safety / rider presence
@@ -218,9 +219,11 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
 - Added `bool cruise_btn_pressed` / `cruise_btn_prev` — state of the cruise button on RX pin
 - Added `float cruise_target_speed` — speed (km/h) captured when cruise was activated
 - Added `float cruise_pid_i` — running integral accumulator for cruise PI controller (amps)
+- Added `float wheelie_throttle_offset` — the runtime offset currently added to the wheelie setpoint by throttle twist (`wheelie_throttle_angle * adc1_mapped`); 0 when not wheelieing or when the throttle isn't twisted, exposed to the UI via realtime data
 
 ### `src/rt_data.h`
 - Added `S(throttle_val)` to the `RT_DATA_ITEMS` macro — sends `d->throttle_val` as a realtime data item to the UI
+- Added `S(wheelie_throttle_offset)` to the `RT_DATA_RUNTIME_ITEMS` macro — sends `d->wheelie_throttle_offset` as a realtime data item, only while `STATE_RUNNING` (reads as `NaN` otherwise, so the UI never shows a stale value)
 
 ### `src/motor_control.h` / `src/motor_control.c`
 - Added `uint8_t can_forward_id` to `MotorControl` — stores the configured CAN ID from config
@@ -455,7 +458,9 @@ The PID setpoint itself is not an issue: `reset_runtime_vars()` seeds `setpoint`
 - Added `[s_Throttle, "THROTTLE"]` and `[s_Cruise, "CRUISE"]` to `pkgStateToString` — displays the correct label in the state indicator
 - Added `s_Throttle` and `s_Cruise` to the `pkgStateIsError` exclusion list — neither state is treated as a fault
 - Added `["throttle_val", ...]` to the realtime data item map — the combined throttle/brake value (-1 to +1) is plotted in the live data graph
+- Added `["wheelie_throttle_offset", ...]` to the realtime data item map — plotted in the "pitch" scaling group alongside `setpoint`
 - Added `throttleGauge`: a dial widget in the HUD that reads `state.rtData["throttle_val"]` and displays throttle/brake percentage on a ±100% dial labelled "throttle"
+- `throttleGauge` switches modes while in wheelie mode (`state.pkgState === state.s_Running`): the dial shows `state.rtData["wheelie_throttle_offset"]` on a fixed ±10° scale (matching the `wheelie_throttle_angle` setting bounds) instead of the throttle percentage, reading 0° when the throttle isn't twisted, and the label changes from "throttle" to "angle mode"
 - Replaced the onewheel board pitch visualiser with a **bike SVG** (`pitchBikeFramePath`, `pitchBikeForkPath`, `pitchBikeSeatPath`, `pitchBikeWheel1Path`, `pitchBikeWheel2Path`) — the bike shape rotates with pitch in the same canvas, showing front and rear wheels, frame, fork, and seat drawn with inline SVG paths
 
 ### Why wheelie re-entry uses hysteresis
