@@ -884,9 +884,12 @@ static void refloat_thd(void *arg) {
             // The IMU callback which normally applies motor control is dead,
             // apply it from here. When the callback resumes, both threads may
             // call this concurrently for up to one loop tick (benign).
-            motor_control_apply(
-                &d->motor_control, d->motor.abs_erpm_smooth.value, d->state.state, &d->time
-            );
+            // Throttle/Cruise are applied at the end of this loop already
+            if (d->state.state != STATE_THROTTLE && d->state.state != STATE_CRUISE) {
+                motor_control_apply(
+                    &d->motor_control, d->motor.abs_erpm_smooth.value, d->state.state, &d->time
+                );
+            }
             alert_tracker_add(&d->alert_tracker, &d->time, ALERT_IMU_TIMEOUT, 0);
         }
 
