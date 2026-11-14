@@ -119,6 +119,10 @@ typedef struct {
     // True once the pitch-lead clamp has had to hold the setpoint back during this
     // wheelie attempt, meaning the rider's pitch never tracked the setpoint properly.
     bool wheelie_lead_clamped;
+    // True from wheelie entry until the throttle has been let down below 10%,
+    // blocking the throttle correction angle from being applied the instant a
+    // wheelie is entered (e.g. while the rider is still holding throttle from entry).
+    bool wheelie_throttle_locked;
     float wheelie_exit_step_size;
     IoButton wheelie_btn;
 

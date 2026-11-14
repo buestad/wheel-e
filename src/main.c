@@ -268,6 +268,7 @@ static void reset_runtime_vars(Data *d) {
     d->wheelie_exiting = false;
     d->wheelie_entering = false;
     d->wheelie_lead_clamped = false;
+    d->wheelie_throttle_locked = true;
     d->cruise_pid_i = 0;
     ema_reset(&d->balance_current, 0.0f);
 
@@ -1107,8 +1108,20 @@ static void refloat_thd(void *arg) {
             // adc1_mapped is 0..1 and scales linearly up to wheelie_throttle_angle.
             // Skipped during the exit ramp so it doesn't fight the ramp back to 0.
             if (!d->wheelie_exiting) {
-                d->wheelie_throttle_offset =
-                    d->float_conf.wheelie_throttle_angle * d->footpad.adc1_mapped;
+                // Don't let the throttle correction through immediately on wheelie entry:
+                // require the rider to first let the throttle down below 10% so entering a
+                // wheelie (which can happen with throttle still applied) doesn't instantly
+                // kick the setpoint by wheelie_throttle_angle. Stays unlocked for the rest
+                // of the wheelie once that has happened.
+                if (d->wheelie_throttle_locked && d->footpad.adc1_mapped < 0.1f) {
+                    d->wheelie_throttle_locked = false;
+                }
+                if (d->wheelie_throttle_locked) {
+                    d->wheelie_throttle_offset = 0.0f;
+                } else {
+                    d->wheelie_throttle_offset =
+                        d->float_conf.wheelie_throttle_angle * d->footpad.adc1_mapped;
+                }
                 setpoint += d->wheelie_throttle_offset;
             } else {
                 d->wheelie_throttle_offset = 0.0f;
