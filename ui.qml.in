@@ -7714,114 +7714,9 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                Item {
-                    id: wheelieAngleControl
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    height: wheelieSwitchColumn.height + 0.2 * unit
-                    readonly property real wheelieLabelHeight: 0.5 * unit
-
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 2 * unit
-                        spacing: 0.25 * unit
-
-                        Column {
-                            id: wheelieSwitchColumn
-
-                            LText {
-                                text: "Enable wheelie"
-                                height: wheelieAngleControl.wheelieLabelHeight
-                                verticalAlignment: Text.AlignVCenter
-                                opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
-                            }
-
-                            Switch {
-                                id: wheelieEnabledSwitch
-                                checked: packageConfig.checkConfig() ? packageConfig.getParamValue("wheelie_enabled") : true
-
-                                onToggled: {
-                                    if (!packageConfig.checkConfig()) return;
-
-                                    packageConfig.pkgConfig.updateParamBool("wheelie_enabled", checked);
-                                    packageConfig.writeConfig();
-                                }
-                            }
-                        }
-
-                        Column {
-                            width: parent.width - wheelieSwitchColumn.width - parent.spacing
-
-                            LText {
-                                text: "Wheelie angle"
-                                height: wheelieAngleControl.wheelieLabelHeight
-                                verticalAlignment: Text.AlignVCenter
-                                width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
-                                opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
-                            }
-
-                            Row {
-                                width: parent.width
-                                height: wheelieEnabledSwitch.height
-                                spacing: 0.25 * unit
-
-                                TapSlider {
-                                    id: wheelieAngleSlider
-                                    width: parent.width - wheelieAngleValue.width - parent.spacing
-                                    height: 0.6 * unit
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    from: 18
-                                    to: 45
-                                    stepSize: 0.5
-                                    sliderEnabled: wheelieEnabledSwitch.checked
-                                    value: packageConfig.checkConfig() ? packageConfig.getParamValue("wheelie_target_pitch") : 25
-
-                                    onMoved: {
-                                        if (!packageConfig.checkConfig() || !wheelieEnabledSwitch.checked) return;
-
-                                        packageConfig.pkgConfig.updateParamDouble("wheelie_target_pitch", value);
-                                        wheelieAngleWriteTimer.restart();
-                                    }
-                                }
-
-                                LText {
-                                    id: wheelieAngleValue
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    font.pixelSize: fontSizeBig
-                                    text: wheelieAngleSlider.value.toFixed(1) + "°"
-                                    opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
-                                }
-                            }
-                        }
-                    }
-
-                    function reloadFromConfig() {
-                        if (!packageConfig.checkConfig()) return;
-
-                        wheelieEnabledSwitch.checked = packageConfig.getParamValue("wheelie_enabled");
-                        wheelieAngleSlider.value = packageConfig.getParamValue("wheelie_target_pitch");
-                    }
-
-                    Component.onCompleted: reloadFromConfig()
-
-                    Connections {
-                        target: packageConfig
-                        function onUpdate() { wheelieAngleControl.reloadFromConfig(); }
-                    }
-
-                    Timer {
-                        id: wheelieAngleWriteTimer
-                        interval: 250
-                        onTriggered: packageConfig.writeConfig()
-                    }
-                }
-
                 GridLayout {
                     property int spacing: 0.6 * unit
-                    anchors.top: wheelieAngleControl.bottom
+                    anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
@@ -7985,6 +7880,109 @@ Item {
                         height: 0.1 * unit
                     }
 
+                    Item {
+                        id: wheelieAngleControl
+                        width: parent.width
+                        height: wheelieSwitchColumn.height + 0.2 * unit
+                        readonly property real wheelieLabelHeight: 0.5 * unit
+
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 2 * unit
+                            spacing: 0.25 * unit
+
+                            Column {
+                                id: wheelieSwitchColumn
+
+                                LText {
+                                    text: "Enable wheelie"
+                                    height: wheelieAngleControl.wheelieLabelHeight
+                                    verticalAlignment: Text.AlignVCenter
+                                    opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
+                                }
+
+                                Switch {
+                                    id: wheelieEnabledSwitch
+                                    checked: packageConfig.checkConfig() ? packageConfig.getParamValue("wheelie_enabled") : true
+
+                                    onToggled: {
+                                        if (!packageConfig.checkConfig()) return;
+
+                                        packageConfig.pkgConfig.updateParamBool("wheelie_enabled", checked);
+                                        packageConfig.writeConfig();
+                                    }
+                                }
+                            }
+
+                            Column {
+                                width: parent.width - wheelieSwitchColumn.width - parent.spacing
+
+                                LText {
+                                    text: "Wheelie angle"
+                                    height: wheelieAngleControl.wheelieLabelHeight
+                                    verticalAlignment: Text.AlignVCenter
+                                    width: parent.width
+                                    horizontalAlignment: Text.AlignHCenter
+                                    opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
+                                }
+
+                                Row {
+                                    width: parent.width
+                                    height: wheelieEnabledSwitch.height
+                                    spacing: 0.25 * unit
+
+                                    TapSlider {
+                                        id: wheelieAngleSlider
+                                        width: parent.width - wheelieAngleValue.width - parent.spacing
+                                        height: 0.6 * unit
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        from: 18
+                                        to: 45
+                                        stepSize: 0.5
+                                        sliderEnabled: wheelieEnabledSwitch.checked
+                                        value: packageConfig.checkConfig() ? packageConfig.getParamValue("wheelie_target_pitch") : 25
+
+                                        onMoved: {
+                                            if (!packageConfig.checkConfig() || !wheelieEnabledSwitch.checked) return;
+
+                                            packageConfig.pkgConfig.updateParamDouble("wheelie_target_pitch", value);
+                                            wheelieAngleWriteTimer.restart();
+                                        }
+                                    }
+
+                                    LText {
+                                        id: wheelieAngleValue
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        font.pixelSize: fontSizeBig
+                                        text: wheelieAngleSlider.value.toFixed(1) + "°"
+                                        opacity: wheelieEnabledSwitch.checked ? 1.0 : 0.5
+                                    }
+                                }
+                            }
+                        }
+
+                        function reloadFromConfig() {
+                            if (!packageConfig.checkConfig()) return;
+
+                            wheelieEnabledSwitch.checked = packageConfig.getParamValue("wheelie_enabled");
+                            wheelieAngleSlider.value = packageConfig.getParamValue("wheelie_target_pitch");
+                        }
+
+                        Component.onCompleted: reloadFromConfig()
+
+                        Connections {
+                            target: packageConfig
+                            function onUpdate() { wheelieAngleControl.reloadFromConfig(); }
+                        }
+
+                        Timer {
+                            id: wheelieAngleWriteTimer
+                            interval: 250
+                            onTriggered: packageConfig.writeConfig()
+                        }
+                    }
+
                     LText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible: lights.enabled
@@ -8018,6 +8016,7 @@ Item {
                         }
                     }
 
+                    /*
                     LText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         font.pixelSize: fontSizeBig
@@ -8087,6 +8086,7 @@ Item {
                             commands.sendFlywheel(state.pkgMode === state.m_Normal);
                         }
                     }
+                    */
 
                     Item {
                         width: parent.width
