@@ -204,6 +204,12 @@ The current realtime-data protocol sends the internal state in bits 26-24 of `st
   - **Wheelie mode**: `wheelie_enabled`, `wheelie_target_pitch`, `wheelie_entry_rate`, `wheelie_entry_rate_factor`, `wheelie_exit_rate`, `wheelie_exit_rate_factor`, `wheelie_button_mode`, `wheelie_throttle_angle`
   - **Cruise control**: `cruise_enabled`, `cruise_kp`, `cruise_ki`
   - **Slave VESC (2WD)**: `can_forward_id`
+- Default of `fault_adc1` and `fault_adc2` changed from `2` to `0` so footpad switch logic is disabled out of the box
+- Renamed the config page from "Refloat Cfg" to "Wheel-E Cfg" and the "Refloat Package Details" separator to "Package Details"
+- Hid board-only options from the UI by commenting them out of `<Grouping>` (the parameters remain in `<Params>` and `<SerOrder>`, so the config layout is unchanged and they keep their defaults):
+  - **Startup**: `startup_simplestart_enabled`, `startup_pushstart_enabled`, `startup_dirtylandings_enabled`, and the **Holding** section (`parking_brake_mode`, `brake_current`)
+  - **Stop**: the **Switches** and **Features** sections (`fault_delay_switch_half`, `fault_delay_switch_full`, `fault_adc_half_erpm`, `fault_is_dual_switch`, `fault_moving_fault_disabled`, `enable_quickstop`, `fault_darkride_enabled`, `fault_reversestop_enabled`)
+  - **Remote**: the whole subgroup
 
 ### `src/data.h`
 - Added `float throttle_current` to the `Data` struct — holds the current output in `STATE_THROTTLE`
@@ -461,6 +467,7 @@ The PID setpoint itself is not an issue: `reset_runtime_vars()` seeds `setpoint`
 - Added `["wheelie_throttle_offset", ...]` to the realtime data item map — plotted in the "pitch" scaling group alongside `setpoint`
 - Added `throttleGauge`: a dial widget in the HUD that reads `state.rtData["throttle_val"]` and displays throttle/brake percentage on a ±100% dial labelled "throttle"
 - `throttleGauge` switches modes while in wheelie mode (`state.pkgState === state.s_Running`): the dial shows `state.rtData["wheelie_throttle_offset"]` on a fixed ±10° scale (matching the `wheelie_throttle_angle` setting bounds) instead of the throttle percentage, reading 0° when the throttle isn't twisted, and the label changes from "throttle" to "angle mode"
+- Rebranded user-facing text from "Refloat" / "board" to "Wheel-E" / "bike" (page name, dialogs, enable/disable buttons, backup labels, log prefixes)
 - Replaced the onewheel board pitch visualiser with a **bike SVG** (`pitchBikeFramePath`, `pitchBikeForkPath`, `pitchBikeSeatPath`, `pitchBikeWheel1Path`, `pitchBikeWheel2Path`) — the bike shape rotates with pitch in the same canvas, showing front and rear wheels, frame, fork, and seat drawn with inline SVG paths
 
 ### Why wheelie re-entry uses hysteresis
@@ -482,36 +489,36 @@ When deploying on a bike, set the following in the VESC Tool UI:
 
 |Path| Parameter | Recommended value | Reason |
 |---|---|---|---|
-|Refloat Cfg → Specs | ADC1 Switch Voltage (`fault_adc1`) | `0` | Disables footpad switch logic; ADC1 raw value still readable for throttle |
-|Refloat Cfg → Specs | ADC2 Switch Voltage (`fault_adc2`) | `0` | Disables footpad switch logic; ADC2 raw value still readable for brake |
+|Wheel-E Cfg → Specs | ADC1 Switch Voltage (`fault_adc1`) | `0` (default) | Disables footpad switch logic; ADC1 raw value still readable for throttle |
+|Wheel-E Cfg → Specs | ADC2 Switch Voltage (`fault_adc2`) | `0` (default) | Disables footpad switch logic; ADC2 raw value still readable for brake |
 |App Cfg → General | App to use | `No App` | Disables the VESC built in ADC app. Prevents interference with the current commands. Alternatively set to `UART` |
 |Motor Cfg → General → Current | Max current | Safe value | This is the max motor current. Set this low when you start to tune to prevent damage |
-|Refloat Cfg → Bike | Wheelie Target Pitch (`wheelie_target_pitch`) | Tune per bike | Physical balance point — start at 25° and adjust |
-|Refloat Cfg → Bike | Wheelie Entry Rate (`wheelie_entry_rate`) | `0` or `30-90` | °/s to ramp setpoint up on entry; 0 = instant; minimum 20 °/s enforced for non-zero values |
-|Refloat Cfg → Bike | Wheelie Entry Rate Factor (`wheelie_entry_rate_factor`) | `0` | °/s added per km/h of bike speed during entry ramp |
-|Refloat Cfg → Bike | Wheelie Exit Rate (`wheelie_exit_rate`) | `0` or `30-90` | °/s to ramp setpoint down on exit; 0 = instant; minimum 20 °/s enforced for non-zero values |
-|Refloat Cfg → Bike | Wheelie Exit Rate Factor (`wheelie_exit_rate_factor`) | `0` | °/s added per km/h of bike speed during exit ramp |
-|Refloat Cfg → Bike | Wheelie Button Mode (`wheelie_button_mode`) | `None` | Button on TX pin: None / Down / Hold |
-|Refloat Cfg → Bike | Wheelie Throttle Angle (`wheelie_throttle_angle`) | `0` | Max degrees added to the wheelie target by twisting the throttle; 0 = disabled |
-|Refloat Cfg → Bike | Throttle Current Deadband (`throttle_current_deadband`) | `1.0` | Current commands below this (A) are suppressed to zero |
-|Refloat Cfg → Bike | Brake Lever Strength (`throttle_brake_percent`) | `50` | Max brake current as % of motor config brake current limit; 100 % = full braking |
-|Refloat Cfg → Bike | Brake Lever Ramp Time (`throttle_brake_ramp_time`) | `0.2` | Seconds to ramp from 0 to max brake on lever press; 0 = instant (useful for analog levers) |
-|Refloat Cfg → Bike | Throttle Ramp Time (`throttle_ramp_time`) | `0` | Seconds to ramp from 0 to full throttle when applied; release is instant; 0 = no ramp |
-|Refloat Cfg → Bike | Regen Brake Strength (`throttle_regen_percent`) | `0` | % of motor config brake current limit applied as regen when throttle is released; 0 = disabled |
-|Refloat Cfg → Bike | Throttle ADC1 Voltage Min (`throttle_adc1_voltage_min`) | `0.5` | ADC1 voltage at 0% throttle; adjust to match hardware rest voltage |
-|Refloat Cfg → Bike | Throttle ADC1 Voltage Center (`throttle_adc1_voltage_center`) | `1.65` | ADC1 voltage at 50% current |
-|Refloat Cfg → Bike | Throttle ADC1 Voltage Max (`throttle_adc1_voltage_max`) | `3.2` | ADC1 voltage at 100% throttle; adjust to match hardware full-scale |
-|Refloat Cfg → Bike | Throttle ADC1 Invert (`throttle_adc1_invert`) | `false` | Flip ADC1 direction if wired in reverse |
-|Refloat Cfg → Bike | Brake ADC2 Voltage Min (`throttle_adc2_voltage_min`) | `0.5` | ADC2 voltage at 0% brake |
-|Refloat Cfg → Bike | Brake ADC2 Voltage Max (`throttle_adc2_voltage_max`) | `3.2` | ADC2 voltage at 100% brake |
-|Refloat Cfg → Bike | Brake ADC2 Invert (`throttle_adc2_invert`) | `false` | Flip ADC2 direction if wired in reverse |
-|Refloat Cfg → Bike | Throttle ADC Filter (`throttle_adc_filter`) | `0.1` | Low-pass filter strength for raw ADC voltages; 0 = off, higher = smoother but more lag |
-|Refloat Cfg → Startup → Tolerances | Startup Pitch Axis Angle Tolerance (`startup_pitch_tolerance`) | `2–6°` | Smaller = later entry (less time to catch); larger = earlier but may trigger unintentionally |
-|Refloat Cfg → Stop | Pitch Axis Fault Cutoff (`fault_pitch`) | Tune per bike | Must be above wheelie angle to avoid spurious pitch faults during balance |
-|Refloat Cfg → Bike → Cruise control | Enable Cruise Control (`cruise_enabled`) | `true` | Must be on for RX pin to be configured and cruise to be available |
-|Refloat Cfg → Bike → Cruise control | Cruise Control KP (`cruise_kp`) | `2.0` | Start here; increase if speed response is sluggish |
-|Refloat Cfg → Bike → Cruise control | Cruise Control KI (`cruise_ki`) | `0.5` | Start here; increase if steady-state speed error persists on hills |
-|Refloat Cfg → Bike → Slave VESC (2WD) | CAN Forward ID (`can_forward_id`) | `0` | Set to the CAN ID of the slave VESC to enable 2WD forwarding; 0 = disabled |
+|Wheel-E Cfg → Bike | Wheelie Target Pitch (`wheelie_target_pitch`) | Tune per bike | Physical balance point — start at 25° and adjust |
+|Wheel-E Cfg → Bike | Wheelie Entry Rate (`wheelie_entry_rate`) | `0` or `30-90` | °/s to ramp setpoint up on entry; 0 = instant; minimum 20 °/s enforced for non-zero values |
+|Wheel-E Cfg → Bike | Wheelie Entry Rate Factor (`wheelie_entry_rate_factor`) | `0` | °/s added per km/h of bike speed during entry ramp |
+|Wheel-E Cfg → Bike | Wheelie Exit Rate (`wheelie_exit_rate`) | `0` or `30-90` | °/s to ramp setpoint down on exit; 0 = instant; minimum 20 °/s enforced for non-zero values |
+|Wheel-E Cfg → Bike | Wheelie Exit Rate Factor (`wheelie_exit_rate_factor`) | `0` | °/s added per km/h of bike speed during exit ramp |
+|Wheel-E Cfg → Bike | Wheelie Button Mode (`wheelie_button_mode`) | `None` | Button on TX pin: None / Down / Hold |
+|Wheel-E Cfg → Bike | Wheelie Throttle Angle (`wheelie_throttle_angle`) | `0` | Max degrees added to the wheelie target by twisting the throttle; 0 = disabled |
+|Wheel-E Cfg → Bike | Throttle Current Deadband (`throttle_current_deadband`) | `1.0` | Current commands below this (A) are suppressed to zero |
+|Wheel-E Cfg → Bike | Brake Lever Strength (`throttle_brake_percent`) | `50` | Max brake current as % of motor config brake current limit; 100 % = full braking |
+|Wheel-E Cfg → Bike | Brake Lever Ramp Time (`throttle_brake_ramp_time`) | `0.2` | Seconds to ramp from 0 to max brake on lever press; 0 = instant (useful for analog levers) |
+|Wheel-E Cfg → Bike | Throttle Ramp Time (`throttle_ramp_time`) | `0` | Seconds to ramp from 0 to full throttle when applied; release is instant; 0 = no ramp |
+|Wheel-E Cfg → Bike | Regen Brake Strength (`throttle_regen_percent`) | `0` | % of motor config brake current limit applied as regen when throttle is released; 0 = disabled |
+|Wheel-E Cfg → Bike | Throttle ADC1 Voltage Min (`throttle_adc1_voltage_min`) | `0.5` | ADC1 voltage at 0% throttle; adjust to match hardware rest voltage |
+|Wheel-E Cfg → Bike | Throttle ADC1 Voltage Center (`throttle_adc1_voltage_center`) | `1.65` | ADC1 voltage at 50% current |
+|Wheel-E Cfg → Bike | Throttle ADC1 Voltage Max (`throttle_adc1_voltage_max`) | `3.2` | ADC1 voltage at 100% throttle; adjust to match hardware full-scale |
+|Wheel-E Cfg → Bike | Throttle ADC1 Invert (`throttle_adc1_invert`) | `false` | Flip ADC1 direction if wired in reverse |
+|Wheel-E Cfg → Bike | Brake ADC2 Voltage Min (`throttle_adc2_voltage_min`) | `0.5` | ADC2 voltage at 0% brake |
+|Wheel-E Cfg → Bike | Brake ADC2 Voltage Max (`throttle_adc2_voltage_max`) | `3.2` | ADC2 voltage at 100% brake |
+|Wheel-E Cfg → Bike | Brake ADC2 Invert (`throttle_adc2_invert`) | `false` | Flip ADC2 direction if wired in reverse |
+|Wheel-E Cfg → Bike | Throttle ADC Filter (`throttle_adc_filter`) | `0.1` | Low-pass filter strength for raw ADC voltages; 0 = off, higher = smoother but more lag |
+|Wheel-E Cfg → Startup → Tolerances | Startup Pitch Axis Angle Tolerance (`startup_pitch_tolerance`) | `2–6°` | Smaller = later entry (less time to catch); larger = earlier but may trigger unintentionally |
+|Wheel-E Cfg → Stop | Pitch Axis Fault Cutoff (`fault_pitch`) | Tune per bike | Must be above wheelie angle to avoid spurious pitch faults during balance |
+|Wheel-E Cfg → Bike → Cruise control | Enable Cruise Control (`cruise_enabled`) | `true` | Must be on for RX pin to be configured and cruise to be available |
+|Wheel-E Cfg → Bike → Cruise control | Cruise Control KP (`cruise_kp`) | `2.0` | Start here; increase if speed response is sluggish |
+|Wheel-E Cfg → Bike → Cruise control | Cruise Control KI (`cruise_ki`) | `0.5` | Start here; increase if steady-state speed error persists on hills |
+|Wheel-E Cfg → Bike → Slave VESC (2WD) | CAN Forward ID (`can_forward_id`) | `0` | Set to the CAN ID of the slave VESC to enable 2WD forwarding; 0 = disabled |
 
 ---
 

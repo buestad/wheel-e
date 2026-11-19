@@ -28,8 +28,9 @@ Wheel-E is a VESC Package for electric mini-bikes with a wheelie mode. The packa
 ## Full code documentation
 [Wheel-E code modifications](doc/wheel-e_mods.md) This document describes the code changes made to ReFloat to implement the Wheel-E functionality. It includes explanations of the new state machine logic, parameter handling, and UI changes.
 
-[ReFloat README](ReFloat_README.md) This is the original README for the ReFloat project, which provides an overview of the base code that Wheel-E is built upon. It includes setup instructions, functionality summaries, and documentation links for ReFloat itself.
+[ReFloat README](https://github.com/lukash/refloat/blob/main/README.md) This is the original README for the ReFloat project, which provides an overview of the base code that Wheel-E is built upon. It includes setup instructions, functionality summaries, and documentation links for ReFloat itself.
 
 ## Project status
 As of 01.11.2026: Code tested by author and a few other users. The bikes used for testing are custom DIY mini-bikes.
 Special thanks to the members of the project discussion channel on Discord: [Vescify / Projects / Wheel-E](https://discord.com/channels/846794200308908065/1494378063352561704)
+
