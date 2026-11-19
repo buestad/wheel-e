@@ -1,14 +1,15 @@
 // Copyright 2022 Benjamin Vedder <benjamin@vedder.se>
 // Copyright 2024 Lukas Hrazky
+// Copyright 2026 Henrik Buestad
 //
-// This file is part of the Refloat VESC package.
+// This file is part of the Wheel-E VESC package which is a fork of the Refloat VESC package.
 //
-// Refloat VESC package is free software: you can redistribute it and/or modify
+// Wheel-E VESC package is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by the
 // Free Software Foundation, either version 3 of the License, or (at your
 // option) any later version.
 //
-// Refloat VESC package is distributed in the hope that it will be useful, but
+// Wheel-E VESC package is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 // more details.
@@ -374,7 +375,7 @@ Item {
             }
         }
 
-        // Called explicitly after the Write button in Refloat Cfg qml page is pressed
+        // Called explicitly after the Write button in Wheel-E Cfg qml page is pressed
         function configWritten() {
             disarmDueUpdate();
             unsetDefault();
@@ -1188,7 +1189,7 @@ Item {
             UIHintText {
                 anchors.horizontalCenter: statusTextSubject.horizontalCenter
                 anchors.bottom: statusTextSubject.top
-                text: "Tap the state text to show more board state details like Stop Condition, Last Beep Reason, errors and faults."
+                text: "Tap the state text to show more bike state details like Stop Condition, Last Beep Reason, errors and faults."
             }
         }
     }
@@ -1295,14 +1296,14 @@ Item {
             UIHintText {
                 anchors.horizontalCenter: subject.horizontalCenter
                 anchors.bottom: subject.top
-                text: "You have the Data Record firmware installed.\n\nYour board has the ability to store a short detailed data \"log\" by itself, you don't need to be connected.\n\nIt's controlled by these two buttons."
+                text: "You have the Data Record firmware installed.\n\nYour bike has the ability to store a short detailed data \"log\" by itself, you don't need to be connected.\n\nIt's controlled by these two buttons."
                 visible: hintId === "drGeneral"
             }
 
             UIHintText {
                 anchors.horizontalCenter: subject.horizontalCenter
                 anchors.bottom: subject.top
-                text: "This button indicates whether the board is recording. You can use it to start and stop the recording manually.\n\nThe board automatically starts recording when engaged and stops recording on disengage. Control this and the recording duration by long-pressing the button.\n\nIf you nosedive, check the recording before engaging again!"
+                text: "This button indicates whether the bike is recording. You can use it to start and stop the recording manually.\n\nThe bike automatically starts recording when engaged and stops recording on disengage. Control this and the recording duration by long-pressing the button.\n\nIf you nosedive, check the recording before engaging again!"
                 visible: hintId === "drStartStop"
             }
 
@@ -1701,15 +1702,15 @@ Item {
             if (packageConfig.isDefault()) {
                 var backup = loadBackup("auto_backup_" + board.getId());
                 if (!backup) {
-                    print("Refloat: No automatic backup to restore.");
+                    print("Wheel-E: No automatic backup to restore.");
                 } else if (packageConfig.diffConfig(backup).differs.length === 0) {
-                    print("Refloat: Automatic backup matches defaults, skipping.");
+                    print("Wheel-E: Automatic backup matches defaults, skipping.");
                 } else {
-                    print("Refloat: Automatic backup restore.");
+                    print("Wheel-E: Automatic backup restore.");
                     applyConfigDialog.show(backup, true, false);
                 }
             } else {
-                print("Refloat: Automatic config backup.");
+                print("Wheel-E: Automatic config backup.");
                 autoBackup();
             }
         }
@@ -4769,12 +4770,12 @@ Item {
             // There is no reliable "config updated" signal, we have to hook onto
             // the VESC Tool custom config buttons (works for QML only, not
             // for the desktop app config page).
-            print("Refloat: Hooking custom config Write button...");
+            print("Wheel-E: Hooking custom config Write button...");
             customConfigWriteButton = locateButton(confCustomLoader.item, "Write");
             if (customConfigWriteButton) {
                 customConfigWriteButton.clicked.connect(packageConfig.configWritten);
             } else {
-                print("Refloat: Failed to locate Write button.");
+                print("Wheel-E: Failed to locate Write button.");
             }
         }
 
@@ -4787,11 +4788,11 @@ Item {
 
     Component.onDestruction: {
         if (typeof confCustomLoader !== typeof undefined) {
-            print("Refloat: Unhooking custom config Write button...");
+            print("Wheel-E: Unhooking custom config Write button...");
             if (customConfigWriteButton) {
                 customConfigWriteButton.clicked.disconnect(packageConfig.configWritten);
             } else {
-                print("Refloat: Write button was not set.");
+                print("Wheel-E: Write button was not set.");
             }
         }
     }
@@ -5035,13 +5036,13 @@ Item {
                         }
 
                         SetupDescription {
-                            text: "Before running the motor wizard, you need to disable the package to prevent the two fighting over the motor. After configuring your motor, you can re-enable the package."
+                            text: "Before running the motor wizard, you need to disable the Wheel-E package to prevent the two fighting over the motor. After configuring your motor, you can re-enable the package."
                         }
 
                         Button {
                             Layout.alignment: Qt.AlignHCenter
 
-                            text: state.pkgState === state.s_Disabled ? "Enable Refloat" : "Disable Refloat"
+                            text: state.pkgState === state.s_Disabled ? "Enable Wheel-E" : "Disable Wheel-E"
 
                             onClicked: {
                                 packageConfig.setDisabled(state.pkgState !== state.s_Disabled);
@@ -5053,7 +5054,7 @@ Item {
                         }
 
                         SetupDescription {
-                            text: "After finishing setup, you can turn on the Handtest mode and engage your board by hand to verify that it balances in the correct direction. Motor currents will be limited to a safe level."
+                            text: "After finishing setup, you can turn on the Handtest mode and engage your bike by hand to verify that it balances in the correct direction. Motor currents will be limited to a safe level."
                         }
 
                         Button {
@@ -5070,7 +5071,7 @@ Item {
 
                         SetupDescription {
                             visible: state.pkgMode === state.m_Handtest
-                            text: "If your board balances in reverse (shoots off), your Imu Rotation Yaw is off by 180°. If it moves erratically, your Imu Rotation Yaw is likely off by 90°.\nNote: When Handtest is on, any configuration writing is disabled."
+                            text: "If your bike balances in reverse (shoots off), your Imu Rotation Yaw is off by 180°. If it moves erratically, your Imu Rotation Yaw is likely off by 90°.\nNote: When Handtest is on, any configuration writing is disabled."
                         }
 
                         Heading {
@@ -5082,7 +5083,7 @@ Item {
                         }
 
                         SubHeading {
-                            text: "Automatic Board Backup"
+                            text: "Automatic Bike Backup"
                         }
 
                         SetupDescription {
@@ -5113,7 +5114,7 @@ Item {
                         }
 
                         SubHeading {
-                            text: "Board Backup"
+                            text: "Bike Backup"
                         }
 
                         SetupDescription {
@@ -5378,7 +5379,7 @@ Item {
     BaseDialog {
         id: editBoardNameDialog
 
-        title: "Set Board Name"
+        title: "Set Bike Name"
         standardButtons: Dialog.Save | Dialog.Cancel
 
         onAccepted: {
@@ -5561,7 +5562,7 @@ Item {
                 Layout.fillWidth: true
                 font.pointSize: 12
                 wrapMode: TextEdit.WordWrap
-                text: "Tune \"%1\" will be converted from version 1.2 or lower to 1.3.\n\nThe conversion uses the motor parameters of the connected board. Make sure this is the board the tune is made for.".arg(convertTuneDialog.tune ? convertTuneDialog.tune.name : "")
+                text: "Tune \"%1\" will be converted from version 1.2 or lower to 1.3.\n\nThe conversion uses the motor parameters of the connected bike. Make sure this is the bike the tune is made for.".arg(convertTuneDialog.tune ? convertTuneDialog.tune.name : "")
             }
 
             Column {
@@ -5782,14 +5783,14 @@ Item {
                 }
 
                 ErrDesc {
-                    text: "Refloat package is disabled. After you're done with board setup, re-enable it."
+                    text: "Wheel-E package is disabled. After you're done with bike setup, re-enable it."
                     visible: state.pkgState === state.s_Disabled
                 }
 
                 Button {
                     Layout.alignment: Qt.AlignHCenter
 
-                    text: "Enable Refloat"
+                    text: "Enable Wheel-E"
                     visible: state.pkgState === state.s_Disabled
 
                     onClicked: {
@@ -5803,12 +5804,12 @@ Item {
                 }
 
                 ErrText {
-                    text: "Refloat Cfg failed to load"
+                    text: "Wheel-E Cfg failed to load"
                     visible: state.configLoadingError
                 }
 
                 ErrDesc {
-                    text: "Reconnecting to the board usually fixes this. If problem persists, try reinstalling the package."
+                    text: "Reconnecting to the bike usually fixes this. If problem persists, try reinstalling the package."
                     visible: state.configLoadingError
                 }
 
@@ -5818,7 +5819,7 @@ Item {
                 }
 
                 ErrDesc {
-                    text: "Package is not responding. May occur temporarily with spotty connection. If board doesn't engage, the package is dead. Restart the board, if problem persists, try reinstalling the package.";
+                    text: "Package is not responding. May occur temporarily with spotty connection. If bike doesn't engage, the package is dead. Restart the bike, if problem persists, try reinstalling the package.";
                     visible: state.pkgState === state.s_Disconnected
                 }
 
@@ -6354,7 +6355,7 @@ Item {
         }
 
         Page {
-            title: "Welcome to Refloat"
+            title: "Welcome to Wheel-E"
             anchors.centerIn: parent
             width: parent.width - 20
             padding: 10
@@ -6389,7 +6390,7 @@ Item {
                     id: welcomeMessage
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
-                    text: "If you haven't configured your board yet, make sure to configure your motor and IMU before you try to ride the board.\n\nTo run the motor wizard, you need to disable the Refloat package first. You can do so in Refloat Settings > Setup, which you can access using the cog button in the top right corner of the main Refloat screen.\n\nAfter the setup, you can safely verify your board balances correctly using the Handtest mode.\n\nTo configure Refloat, you need to set the High and Low Voltage Thresholds in Refloat Cfg > Specs according to your battery voltage. The rest of the configuration options has defaults that should provide you with a well-behaving, rideable board.\n\nHappy shredding!\n\nGo to Settings > Setup now?"
+                    text: "If you haven't configured your bike yet, make sure to configure your motor and IMU before you try to ride the bike.\n\nTo run the motor wizard, you need to disable the Wheel-E package first. You can do so in Settings > Setup, which you can access using the cog button in the top right corner of the main Wheel-E screen.\n\nAfter the setup, you can safely verify your bike balances correctly using the Handtest mode.\n\nTo configure Wheel-E, you need to set the High and Low Voltage Thresholds in Wheel-E Cfg > Specs according to your battery voltage. The rest of the configuration options has defaults that should provide you with a well-behaving, rideable bike.\n\nHappy shredding!\n\nGo to Settings > Setup now?"
                 }
 
                 CheckBox {

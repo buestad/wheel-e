@@ -1,13 +1,14 @@
 // Copyright 2025 Lukas Hrazky
+// Copyright 2026 Henrik Buestad
 //
-// This file is part of the Refloat VESC package.
+// This file is part of the Wheel-E VESC package which is a fork of the Refloat VESC package.
 //
-// Refloat VESC package is free software: you can redistribute it and/or modify
+// Wheel-E VESC package is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by the
 // Free Software Foundation, either version 3 of the License, or (at your
 // option) any later version.
 //
-// Refloat VESC package is distributed in the hope that it will be useful, but
+// Wheel-E VESC package is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 // more details.
