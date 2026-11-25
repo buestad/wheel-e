@@ -906,6 +906,11 @@ static void refloat_thd(void *arg) {
 
         io_buttons_update(&d->wheelie_btn, &d->cruise_btn, &d->float_conf);
 
+        // throttle_val is only computed in STATE_THROTTLE; don't leave a stale value elsewhere
+        if (d->state.state != STATE_THROTTLE) {
+            d->throttle_val = 0.0f;
+        }
+
         // Control Loop State Logic
         switch (d->state.state) {
         case (STATE_STARTUP):
